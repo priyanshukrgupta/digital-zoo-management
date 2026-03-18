@@ -1,81 +1,87 @@
-🐾 Digital Zoo Management and Animal Monitoring System
-📌 Overview
+# 🐾 Digital Zoo Management and Animal Monitoring System
 
-The Digital Zoo Management and Animal Monitoring System is a full-stack web application designed to streamline and digitize zoo operations. It provides a centralized platform to manage animal records, monitor health conditions, track medications, and handle administrative tasks efficiently. The system replaces manual record-keeping with a structured, secure, and scalable solution.
+## 📌 Overview
 
-🎯 Objectives
+The Digital Zoo Management and Animal Monitoring System is a full-stack web application designed to streamline and digitize zoo operations. It provides a centralized platform for managing animal records, monitoring health conditions, tracking medications, and handling administrative activities efficiently. The system reduces dependency on manual processes and ensures organized, secure, and scalable data management.
 
-Automate zoo management processes
+---
 
-Ensure proper monitoring of animal health
+## 🎯 Objectives
 
-Provide centralized administrative control
+* Automate and simplify zoo management processes
+* Ensure proper monitoring of animal health and medical records
+* Provide centralized control for administrative operations
+* Improve efficiency and reduce manual errors
 
-Reduce manual errors and improve efficiency
+---
 
-🚀 Features
-🐘 Animal Management
+## 🚀 Features
 
-Add, update, and delete animal records
+### 🐘 Animal Management
 
-Maintain details such as species, age, habitat, and status
+* Add, update, and delete animal records
+* Store detailed information such as species, age, habitat, and status
 
-❤️ Health Monitoring
+### ❤️ Health Monitoring
 
-Track animal health conditions
+* Maintain animal health records
+* Track diseases, treatments, and medical history
 
-Maintain medical history and reports
+### 💊 Medication Tracking
 
-💊 Medication Tracking
+* Record prescribed medications and treatments
+* Monitor ongoing and completed treatments
 
-Record treatments and medications
+### 👨‍⚕️ Staff & Veterinary Management
 
-Monitor ongoing and past treatments
+* Manage zoo staff and veterinary roles
+* Assign responsibilities and maintain records
 
-👨‍⚕️ Staff & Veterinary Management
+### 📊 Dashboard & Analytics
 
-Manage zoo staff and veterinary roles
+* Display summarized statistics of animals and operations
+* Provide insights for better decision-making
 
-Assign and manage responsibilities
+### 🔐 Authentication & Authorization
 
-📊 Dashboard & Analytics
+* Secure login using JWT authentication
+* Role-based access control (Admin, Staff, Vet)
 
-View summarized statistics and reports
+### 📁 File Upload System
 
-Monitor zoo operations efficiently
+* Upload and manage animal images and reports
 
-🔐 Authentication & Security
+---
 
-Secure login system using JWT
+## 📁 Folder Structure
 
-Role-based access control (Admin, Staff, Vet)
-
-📁 File Upload
-
-Upload animal images and medical reports
-
-📁 Folder Structure
+```bash
 digital-zoo-management/
 │
-├── controllers/        # Business logic
-├── routes/             # API endpoints
-├── middleware/         # Authentication & authorization
-├── models/             # Database operations
-├── config/             # Database configuration
+├── config/             
+├── controllers/        
+├── middleware/         
+├── models/             
+├── routes/             
 │
-├── public/             # Static files (CSS, JS, images)
-├── views/              # Frontend UI pages
-├── uploads/            # Uploaded files
+├── public/             
+├── views/              
+├── uploads/            
 │
-├── database/           # SQL files
+├── database/           
 │
-├── .env                # Environment variables
-├── .gitignore          # Ignored files
-├── package.json        # Dependencies
-├── package-lock.json
-├── server.js           # Entry point
-└── README.md
-🏗️ System Architecture
+├── .gitignore          
+├── package.json        
+├── package-lock.json   
+├── server.js           
+└── README.md           
+```
+
+---
+
+## 🏗️ System Architecture
+
+```
 Client (Browser)
        ↓
 Frontend (HTML, CSS, JS)
@@ -83,105 +89,124 @@ Frontend (HTML, CSS, JS)
 Backend (Node.js + Express)
        ↓
 Database (MySQL)
-🛠️ Tech Stack
-💻 Frontend
+```
 
-HTML5
+---
 
-CSS3
+## 🛠️ Tech Stack
 
-JavaScript
+### 💻 Frontend
 
-⚙️ Backend
+* HTML5
+* CSS3
+* JavaScript
 
-Node.js
+### ⚙️ Backend
 
-Express.js
+* Node.js
+* Express.js
 
-🗄️ Database
+### 🗄️ Database
 
-MySQL
+* MySQL
 
-🔐 Tools & Libraries
+### 🔐 Tools & Libraries
 
-JWT (Authentication)
+* JWT (Authentication)
+* Multer (File Upload Middleware)
+* REST APIs
 
-Multer (File Upload)
+---
 
-REST APIs
+## ⚙️ Installation & Setup
 
-⚙️ Installation & Setup
-1️⃣ Clone Repository
-git clone <your-repo-link>
+### 1️⃣ Clone Repository
+
+```bash
+git clone https://github.com/your-username/digital-zoo-management.git
 cd digital-zoo-management
-2️⃣ Install Dependencies
+```
+
+### 2️⃣ Install Dependencies
+
+```bash
 npm install
-3️⃣ Setup Database
+```
 
-Open MySQL
+### 3️⃣ Setup Database
 
-Create database:
-
+```sql
 CREATE DATABASE zoo_db;
+```
 
-Import the provided .sql file
+* Import the provided SQL file into MySQL
 
-4️⃣ Configure Environment Variables
+---
 
-Create a .env file:
+### 4️⃣ Configure Environment Variables
 
+Create a `.env` file:
+
+```
 PORT=5000
 DB_HOST=localhost
 DB_USER=root
 DB_PASSWORD=your_password
 DB_NAME=zoo_db
 JWT_SECRET=your_secret_key
-5️⃣ Run the Application
+```
+
+---
+
+### 5️⃣ Run the Application
+
+```bash
 npm start
-🚀 Usage
+```
 
-Login using credentials
+---
 
-Admin can:
+## 🚀 Usage
 
-Manage animals
+* Login using valid credentials
+* Admin can manage animals, staff, and system data
+* Staff/Vet can update animal health and track treatments
+* Dashboard provides insights into zoo operations
 
-Manage staff
+---
 
-View analytics
+## 📷 Screenshots
 
-Staff/Vet can:
+![Login](./screenshots/login.png)
+![Dashboard](./screenshots/dashboard.png)
+![Animals](./screenshots/animals.png)
 
-Update animal health
+---
 
-Track medications
+## 🔒 Security Features
 
-🔒 Security Features
+* JWT-based authentication
+* Role-based authorization
+* Protected API routes
+* Secure handling of sensitive data
 
-JWT-based authentication
+---
 
-Role-based authorization
+## 📈 Future Enhancements
 
-Protected API routes
+* Integration with IoT sensors for real-time animal monitoring
+* Advanced reporting and data visualization dashboard
+* Notification system for health alerts and task reminders
+* Multi-zoo management support in a single platform
 
-Secure data handling
+---
 
-📷 Screenshots
+## 👨‍💻 Author
 
-Add your project screenshots here for better presentation
+**Priyanshu Kumar Gupta**
 
-📈 Future Enhancements
+---
 
-📱 Mobile application (APK support)
+## ⭐ Note
 
-🤖 AI-based animal health prediction
-
-📡 IoT-based real-time monitoring
-
-🎟️ Online ticket booking system
-
-📊 Advanced analytics dashboard
-
-👨‍💻 Author
-
-Priyanshu Kumar Gupta
+The `uploads` folder contains sample images for demonstration. Actual images can be uploaded dynamically during runtime.
