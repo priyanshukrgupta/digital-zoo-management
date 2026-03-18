@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <link rel="stylesheet" href="/css/jungle.css">
+<link rel="stylesheet" href="/css/animations.css">
+<link rel="stylesheet" href="/css/theme.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Digital Zoo — Animal Leaderboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Crimson+Pro:wght@300;400;600&display=swap" rel="stylesheet">
+<style>
+  :root{--bg:#0a1a0e;--sidebar:#0d2414;--card:#0f2818;--card2:#122e1c;--gold:#c9a84c;--gold-light:#e8c86e;--cream:#f5ead5;--white:#faf7f0;--green:#2d6e3e;--muted:#8a9e8e;--border:rgba(201,168,76,0.15);}
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{font-family:'Crimson Pro',serif;background:var(--bg);color:var(--white);display:flex;min-height:100vh;}
+  .sidebar{width:260px;background:var(--sidebar);border-right:1px solid var(--border);display:flex;flex-direction:column;position:fixed;top:0;left:0;height:100vh;z-index:100;}
+  .sidebar-logo{padding:24px 20px;border-bottom:1px solid var(--border);}
+  .sidebar-logo h2{font-family:'Playfair Display',serif;background:linear-gradient(135deg,#c9a84c,#e8c86e);-webkit-background-clip:text;-webkit-text-fill-color:transparent;font-size:1.3rem;}
+  .sidebar-logo p{color:var(--muted);font-size:0.75rem;letter-spacing:2px;text-transform:uppercase;margin-top:2px;}
+  .nav{flex:1;padding:16px 0;overflow-y:auto;}
+  .nav-section{padding:8px 20px;color:var(--muted);font-size:0.7rem;letter-spacing:3px;text-transform:uppercase;margin-top:8px;}
+  .nav a{display:flex;align-items:center;gap:12px;padding:12px 20px;color:var(--muted);text-decoration:none;transition:all 0.2s;font-size:0.95rem;border-left:3px solid transparent;}
+  .nav a:hover,.nav a.active{color:var(--white);background:rgba(201,168,76,0.08);border-left-color:var(--gold);}
+  .nav a.active{color:var(--gold-light);}
+  .nav a .icon{width:20px;text-align:center;font-size:1.1rem;}
+  .sidebar-user{padding:16px 20px;border-top:1px solid var(--border);}
+  .user-info{display:flex;align-items:center;gap:10px;}
+  .user-avatar{width:36px;height:36px;background:linear-gradient(135deg,var(--gold),var(--green));border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:bold;color:var(--bg);}
+  .user-name{font-size:0.9rem;color:var(--cream);}
+  .user-role{font-size:0.75rem;color:var(--muted);text-transform:uppercase;}
+  .main{margin-left:260px;flex:1;padding:28px;min-height:100vh;}
+  .topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:28px;}
+  .topbar h1{font-family:'Playfair Display',serif;font-size:1.8rem;color:var(--cream);}
+  .tabs{display:flex;gap:4px;background:var(--card);border:1px solid var(--border);border-radius:12px;padding:4px;margin-bottom:24px;width:fit-content;}
+  .tab{padding:10px 22px;border-radius:9px;cursor:pointer;color:var(--muted);font-size:0.9rem;transition:all 0.2s;border:none;background:none;font-family:'Crimson Pro',serif;}
+  .tab.active{background:linear-gradient(135deg,#c9a84c,#e8c86e);color:#0a1a0e;font-weight:600;}
+  .podium{display:flex;align-items:flex-end;justify-content:center;gap:16px;margin-bottom:32px;padding:20px;}
+  .podium-place{display:flex;flex-direction:column;align-items:center;gap:8px;}
+  .podium-animal{font-size:2.5rem;filter:drop-shadow(0 4px 8px rgba(0,0,0,0.4));}
+  .podium-block{border-radius:12px 12px 0 0;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;padding:12px 20px;min-width:100px;}
+  .podium-1 .podium-block{height:120px;background:linear-gradient(180deg,rgba(201,168,76,0.4),rgba(201,168,76,0.1));border:2px solid var(--gold);}
+  .podium-2 .podium-block{height:90px;background:linear-gradient(180deg,rgba(192,192,192,0.3),rgba(192,192,192,0.05));border:2px solid #aaa;}
+  .podium-3 .podium-block{height:70px;background:linear-gradient(180deg,rgba(205,127,50,0.3),rgba(205,127,50,0.05));border:2px solid #cd7f32;}
+  .podium-rank{font-family:'Playfair Display',serif;font-size:1.8rem;font-weight:900;}
+  .podium-1 .podium-rank{color:var(--gold);}
+  .podium-2 .podium-rank{color:#ccc;}
+  .podium-3 .podium-rank{color:#cd7f32;}
+  .podium-name{color:var(--cream);font-size:0.85rem;text-align:center;margin-bottom:4px;}
+  .podium-score{color:var(--muted);font-size:0.75rem;}
+  /* Leaderboard list */
+  .lb-list{background:var(--card);border:1px solid var(--border);border-radius:16px;overflow:hidden;}
+  .lb-item{display:grid;grid-template-columns:60px auto 1fr auto;align-items:center;gap:16px;padding:14px 20px;border-bottom:1px solid var(--border);transition:background 0.2s;}
+  .lb-item:last-child{border-bottom:none;}
+  .lb-item:hover{background:rgba(201,168,76,0.03);}
+  .lb-rank{font-family:'Playfair Display',serif;font-size:1.4rem;text-align:center;}
+  .rank-1{color:var(--gold);}
+  .rank-2{color:#ccc;}
+  .rank-3{color:#cd7f32;}
+  .rank-other{color:var(--muted);}
+  .lb-img{width:48px;height:48px;border-radius:10px;object-fit:cover;}
+  .lb-ph{width:48px;height:48px;border-radius:10px;background:var(--card2);display:flex;align-items:center;justify-content:center;font-size:1.5rem;}
+  .lb-info .name{color:var(--cream);font-size:0.95rem;font-weight:600;}
+  .lb-info .species{color:var(--muted);font-size:0.8rem;font-style:italic;}
+  .lb-score-wrap{text-align:right;}
+  .lb-score{font-family:'Playfair Display',serif;font-size:1.4rem;color:var(--gold-light);}
+  .lb-score-label{color:var(--muted);font-size:0.75rem;}
+  .score-bar-wrap{background:rgba(255,255,255,0.05);border-radius:4px;height:4px;margin-top:4px;overflow:hidden;}
+  .score-bar{height:100%;border-radius:4px;background:linear-gradient(90deg,var(--green),var(--gold));}
+</style>
+</head>
+<body>
+<aside class="sidebar">
+  <div class="sidebar-logo"><h2>🦁 DIGITAL ZOO</h2><p>Admin System</p></div>
+  <nav class="nav">
+    <div class="nav-section">Main</div>
+    <a href="/dashboard"><span class="icon">📊</span> Dashboard</a>
+    <a href="/animals"><span class="icon">🐾</span> Animals</a>
+    <a href="/adoptions"><span class="icon">🤝</span> Adoptions</a>
+    <a href="/medications"><span class="icon">💊</span> Medical Records</a>
+    <div class="nav-section">Unique Features</div>
+    <a href="/ai-health"><span class="icon">🤖</span> AI Health Predictor</a>
+    <a href="/zoo-map"><span class="icon">🗺️</span> Zoo Map</a>
+    <a href="/leaderboard" class="active"><span class="icon">🏆</span> Leaderboard</a>
+    <a href="/simulation"><span class="icon">🎮</span> Zoo Simulation</a>
+    <a href="/qr-codes"><span class="icon">📱</span> QR Codes</a>
+    <a href="/world-map"><span class="icon">🌍</span> Origin Map</a>
+    <a href="/birthdays"><span class="icon">🎂</span> Birthdays</a>
+    <a href="/activity-monitor"><span class="icon">⚡</span> Activity Monitor</a>
+    <div class="nav-section">Management</div>
+    <a href="/reports"><span class="icon">📈</span> Reports</a>
+  </nav>
+  <div class="sidebar-user">
+    <div class="user-info">
+      <div class="user-avatar" id="userAvatar">A</div>
+      <div><div class="user-name" id="userName">Loading...</div><div class="user-role" id="userRole">---</div></div>
+    </div>
+  </div>
+</aside>
+
+<main class="main">
+  <div class="topbar">
+    <h1>🏆 Animal Leaderboard</h1>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('adopted',this)">🤝 Most Adopted</button>
+    <button class="tab" onclick="switchTab('visited',this)">👁 Most Visited</button>
+    <button class="tab" onclick="switchTab('healthy',this)">❤️ Healthiest</button>
+    <button class="tab" onclick="switchTab('oldest',this)">🎂 Oldest</button>
+  </div>
+
+  <div id="podium" class="podium"></div>
+  <div class="lb-list" id="lbList"></div>
+</main>
+
+<script>
+var token = localStorage.getItem('token');
+var user  = JSON.parse(localStorage.getItem('user') || '{}');
+if (!token) window.location.href = '/login';
+document.getElementById('userName').textContent  = user.name || 'Staff';
+document.getElementById('userRole').textContent  = user.role || 'staff';
+document.getElementById('userAvatar').textContent = (user.name || 'A')[0].toUpperCase();
+
+var EMOJI = { mammal:'🦁', bird:'🦜', reptile:'🦎', fish:'🐟', amphibian:'🐸', invertebrate:'🦋' };
+var allAnimals = [], allAdoptions = [], allVisits = [];
+
+Promise.all([
+  fetch('/api/animals?limit=100',{headers:{'Authorization':'Bearer '+token}}).then(function(r){return r.json();}),
+  fetch('/api/adoptions?limit=200',{headers:{'Authorization':'Bearer '+token}}).then(function(r){return r.json();}),
+  fetch('/api/medications/visits/all?limit=200',{headers:{'Authorization':'Bearer '+token}}).then(function(r){return r.json();})
+]).then(function(results){
+  allAnimals   = results[0].data || [];
+  allAdoptions = results[1].data || [];
+  allVisits    = results[2].data || [];
+  switchTab('adopted', document.querySelector('.tab.active'));
+});
+
+function switchTab(type, btn) {
+  document.querySelectorAll('.tab').forEach(function(b){ b.classList.remove('active'); });
+  btn.classList.add('active');
+  var ranked = rankAnimals(type);
+  renderPodium(ranked.slice(0,3));
+  renderList(ranked);
+}
+
+function rankAnimals(type) {
+  return allAnimals.map(function(a){
+    var score = 0, label = '';
+    if (type === 'adopted') {
+      score = allAdoptions.filter(function(ad){ return ad.animal_id == a.id || ad.animal_name == a.name; }).length;
+      label = 'adoptions';
+    } else if (type === 'visited') {
+      score = allVisits.filter(function(v){ return v.animal_id == a.id || v.animal_name == a.name; }).length;
+      label = 'visits';
+    } else if (type === 'healthy') {
+      var hs = {healthy:100, recovering:60, sick:30, critical:5};
+      score = hs[a.health_status] || 0;
+      label = 'health score';
+    } else if (type === 'oldest') {
+      score = a.age_unit === 'months' ? (a.age||0)/12 : a.age_unit === 'days' ? (a.age||0)/365 : (a.age||0);
+      label = 'years old';
+    }
+    return { animal: a, score: score, label: label };
+  }).sort(function(a,b){ return b.score - a.score; });
+}
+
+function renderPodium(top3) {
+  if (!top3.length) return;
+  var order = top3.length >= 3 ? [top3[1], top3[0], top3[2]] : top3;
+  var ranks = top3.length >= 3 ? [2,1,3] : [1,2,3];
+  var pd = document.getElementById('podium');
+  pd.innerHTML = order.map(function(item, i){
+    var rank = ranks[i];
+    var a = item.animal;
+    var medals = ['🥈','🥇','🥉'];
+    return '<div class="podium-place podium-' + rank + '">' +
+      '<div class="podium-animal">' + (a.image_url ? '' : EMOJI[a.category]||'🐾') + '</div>' +
+      '<div style="color:var(--cream);font-size:0.85rem;font-weight:600;text-align:center">' + a.name + '</div>' +
+      '<div class="podium-block">' +
+        '<div class="podium-rank">' + medals[i] + '</div>' +
+        '<div class="podium-score">' + item.score + ' ' + item.label + '</div>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+}
+
+function renderList(ranked) {
+  var maxScore = ranked[0] ? ranked[0].score || 1 : 1;
+  document.getElementById('lbList').innerHTML = ranked.map(function(item, i){
+    var a = item.animal;
+    var rankClass = i===0?'rank-1':i===1?'rank-2':i===2?'rank-3':'rank-other';
+    var pct = maxScore > 0 ? Math.round((item.score/maxScore)*100) : 0;
+    return '<div class="lb-item">' +
+      '<div class="lb-rank ' + rankClass + '">' + (i+1) + '</div>' +
+      (a.image_url
+        ? '<img class="lb-img" src="' + a.image_url + '" onerror="this.style.display=\'none\'">'
+        : '<div class="lb-ph">' + (EMOJI[a.category]||'🐾') + '</div>') +
+      '<div class="lb-info"><div class="name">' + a.name + '</div><div class="species">' + a.species + '</div></div>' +
+      '<div class="lb-score-wrap">' +
+        '<div class="lb-score">' + item.score + '</div>' +
+        '<div class="lb-score-label">' + item.label + '</div>' +
+        '<div class="score-bar-wrap"><div class="score-bar" style="width:' + pct + '%"></div></div>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+}
+</script>
+</body>
+</html>

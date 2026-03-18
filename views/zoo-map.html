@@ -1,0 +1,891 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <link rel="stylesheet" href="/css/jungle.css">
+<link rel="stylesheet" href="/css/animations.css">
+<link rel="stylesheet" href="/css/theme.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Digital Zoo — Interactive Zoo Map</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Crimson+Pro:wght@300;400;600&display=swap" rel="stylesheet">
+<style>
+  :root{--bg:#0a1a0e;--sidebar:#0d2414;--card:#0f2818;--card2:#122e1c;--gold:#c9a84c;--gold-light:#e8c86e;--cream:#f5ead5;--white:#faf7f0;--green:#2d6e3e;--muted:#8a9e8e;--border:rgba(201,168,76,0.15);}
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{font-family:'Crimson Pro',serif;background:var(--bg);color:var(--white);display:flex;min-height:100vh;}
+  .sidebar{width:260px;background:var(--sidebar);border-right:1px solid var(--border);display:flex;flex-direction:column;position:fixed;top:0;left:0;height:100vh;z-index:100;}
+  .sidebar-logo{padding:24px 20px;border-bottom:1px solid var(--border);}
+  .sidebar-logo h2{font-family:'Playfair Display',serif;background:linear-gradient(135deg,#c9a84c,#e8c86e);-webkit-background-clip:text;-webkit-text-fill-color:transparent;font-size:1.3rem;}
+  .sidebar-logo p{color:var(--muted);font-size:0.75rem;letter-spacing:2px;text-transform:uppercase;margin-top:2px;}
+  .nav{flex:1;padding:16px 0;overflow-y:auto;}
+  .nav-section{padding:8px 20px;color:var(--muted);font-size:0.7rem;letter-spacing:3px;text-transform:uppercase;margin-top:8px;}
+  .nav a{display:flex;align-items:center;gap:12px;padding:12px 20px;color:var(--muted);text-decoration:none;transition:all 0.2s;font-size:0.95rem;border-left:3px solid transparent;}
+  .nav a:hover,.nav a.active{color:var(--white);background:rgba(201,168,76,0.08);border-left-color:var(--gold);}
+  .nav a.active{color:var(--gold-light);}
+  .nav a .icon{width:20px;text-align:center;font-size:1.1rem;}
+  .sidebar-user{padding:16px 20px;border-top:1px solid var(--border);}
+  .user-info{display:flex;align-items:center;gap:10px;}
+  .user-avatar{width:36px;height:36px;background:linear-gradient(135deg,var(--gold),var(--green));border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:bold;color:var(--bg);}
+  .user-name{font-size:0.9rem;color:var(--cream);}
+  .user-role{font-size:0.75rem;color:var(--muted);text-transform:uppercase;}
+
+  .main{margin-left:260px;flex:1;padding:24px;min-height:100vh;}
+  .topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;flex-wrap:wrap;gap:12px;}
+  .topbar h1{font-family:'Playfair Display',serif;font-size:1.8rem;color:var(--cream);}
+  .top-actions{display:flex;align-items:center;gap:10px;}
+  .save-btn{background:linear-gradient(135deg,#c9a84c,#e8c86e);border:none;color:#0a1a0e;padding:10px 22px;border-radius:10px;font-family:'Crimson Pro',serif;font-size:0.9rem;font-weight:600;cursor:pointer;transition:all 0.2s;}
+  .save-btn:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(201,168,76,0.3);}
+  .save-btn:disabled{opacity:0.5;cursor:not-allowed;transform:none;}
+  .spinner-wrap{display:none;align-items:center;gap:6px;color:var(--gold);font-size:0.82rem;}
+  .spinner-wrap.show{display:flex;}
+  .spin{width:14px;height:14px;border:2px solid rgba(201,168,76,0.3);border-top-color:var(--gold);border-radius:50%;animation:spin 0.8s linear infinite;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+  .changes-badge{display:inline-block;background:rgba(192,57,43,0.3);border:1px solid rgba(192,57,43,0.5);color:#ff7070;padding:2px 8px;border-radius:10px;font-size:0.72rem;margin-left:4px;}
+
+  /* 3-col layout */
+  .layout{display:grid;grid-template-columns:210px 1fr 210px;gap:16px;align-items:start;}
+
+  /* LEFT animal list */
+  .animal-panel{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:14px;position:sticky;top:0;}
+  .panel-title{font-family:'Playfair Display',serif;color:var(--cream);font-size:0.95rem;margin-bottom:6px;padding-bottom:8px;border-bottom:1px solid var(--border);}
+  .panel-sub{color:var(--muted);font-size:0.72rem;margin-bottom:10px;}
+  .animal-list{display:flex;flex-direction:column;gap:5px;max-height:560px;overflow-y:auto;}
+  .animal-list::-webkit-scrollbar{width:3px;}
+  .animal-list::-webkit-scrollbar-thumb{background:var(--green);border-radius:2px;}
+  .animal-row{display:flex;align-items:center;gap:7px;padding:7px 9px;border-radius:9px;cursor:grab;border:1px solid var(--border);background:var(--card2);transition:all 0.2s;user-select:none;}
+  .animal-row:hover{border-color:rgba(201,168,76,0.4);background:rgba(201,168,76,0.07);transform:translateX(3px);}
+  .animal-row:active{cursor:grabbing;}
+  .animal-row.dragging{opacity:0.3;}
+  .row-emoji{font-size:1.25rem;flex-shrink:0;}
+  .row-name{color:var(--cream);font-size:0.8rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1;}
+  .row-zone{font-size:0.62rem;text-transform:uppercase;letter-spacing:1px;margin-top:1px;}
+  .drag-hint{display:flex;align-items:center;gap:4px;color:var(--muted);font-size:0.7rem;margin-top:8px;padding-top:8px;border-top:1px solid var(--border);}
+
+  /* MAP */
+  .map-wrap{border-radius:20px;overflow:hidden;position:relative;box-shadow:0 20px 60px rgba(0,0,0,0.6), 0 0 0 1px rgba(201,168,76,0.2);}
+  #mapCanvas{display:block;width:100%;cursor:default;}
+
+  /* RIGHT panel */
+  .right-panel{display:flex;flex-direction:column;gap:12px;}
+  .r-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:14px;}
+  .r-card h4{font-family:'Playfair Display',serif;color:var(--cream);font-size:0.9rem;margin-bottom:10px;}
+  .zone-row{display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid var(--border);font-size:0.8rem;}
+  .zone-row:last-child{border-bottom:none;}
+  .leg-row{display:flex;align-items:center;gap:7px;margin-bottom:6px;font-size:0.78rem;color:var(--cream);}
+  .leg-dot{width:9px;height:9px;border-radius:2px;flex-shrink:0;}
+
+  /* tooltip */
+  .tooltip{position:fixed;background:rgba(10,26,14,0.97);border:1px solid var(--gold);border-radius:10px;padding:10px 14px;pointer-events:none;z-index:200;display:none;font-size:0.82rem;box-shadow:0 8px 24px rgba(0,0,0,0.6);}
+  .tooltip-name{font-family:'Playfair Display',serif;color:var(--cream);font-size:1rem;margin-bottom:3px;}
+  .tooltip-info{color:var(--muted);font-size:0.75rem;}
+
+  .toast{position:fixed;bottom:28px;right:28px;background:rgba(45,110,62,0.92);border:1px solid rgba(45,110,62,0.6);color:#fff;padding:12px 22px;border-radius:12px;z-index:9999;transition:all 0.3s;transform:translateY(100px);opacity:0;}
+  .toast.show{transform:translateY(0);opacity:1;}
+  .toast.error{background:rgba(192,57,43,0.92);}
+</style>
+</head>
+<body>
+<aside class="sidebar">
+  <div class="sidebar-logo"><h2>🦁 DIGITAL ZOO</h2><p>Admin System</p></div>
+  <nav class="nav">
+    <div class="nav-section">Main</div>
+    <a href="/dashboard"><span class="icon">📊</span> Dashboard</a>
+    <a href="/animals"><span class="icon">🐾</span> Animals</a>
+    <a href="/adoptions"><span class="icon">🤝</span> Adoptions</a>
+    <a href="/medications"><span class="icon">💊</span> Medical Records</a>
+    <div class="nav-section">Unique Features</div>
+    <a href="/ai-health"><span class="icon">🤖</span> AI Health Predictor</a>
+    <a href="/zoo-map" class="active"><span class="icon">🗺️</span> Zoo Map</a>
+    <a href="/leaderboard"><span class="icon">🏆</span> Leaderboard</a>
+    <a href="/simulation"><span class="icon">🎮</span> Zoo Live View</a>
+    <a href="/qr-codes"><span class="icon">📱</span> QR Codes</a>
+    <a href="/world-map"><span class="icon">🌍</span> Origin Map</a>
+    <a href="/birthdays"><span class="icon">🎂</span> Birthdays</a>
+    <a href="/activity-monitor"><span class="icon">⚡</span> Activity Monitor</a>
+    <div class="nav-section">Management</div>
+    <a href="/reports"><span class="icon">📈</span> Reports</a>
+  </nav>
+  <div class="sidebar-user">
+    <div class="user-info">
+      <div class="user-avatar" id="userAvatar">A</div>
+      <div><div class="user-name" id="userName">Loading...</div><div class="user-role" id="userRole">---</div></div>
+    </div>
+  </div>
+</aside>
+
+<main class="main">
+  <div class="topbar">
+    <div>
+      <h1>🗺️ Interactive Zoo Map</h1>
+      <p style="color:var(--muted);font-size:0.85rem;margin-top:3px">Drag animals from the left → drop into zones → Save to database</p>
+    </div>
+    <div class="top-actions">
+      <div class="spinner-wrap" id="spinWrap"><div class="spin"></div> Saving...</div>
+      <button class="save-btn" id="saveBtn" onclick="saveAll()">
+        💾 Save Layout <span class="changes-badge" id="badge" style="display:none">0</span>
+      </button>
+    </div>
+  </div>
+
+  <div class="layout">
+    <!-- LEFT -->
+    <div class="animal-panel">
+      <div class="panel-title">🐾 All Animals</div>
+      <div class="panel-sub">Drag any animal onto the map</div>
+      <div class="animal-list" id="animalList">
+        <div style="color:var(--muted);font-size:0.82rem;text-align:center;padding:20px">Loading...</div>
+      </div>
+      <div class="drag-hint">☝️ Click & drag to move</div>
+    </div>
+
+    <!-- MAP CANVAS -->
+    <div class="map-wrap">
+      <canvas id="mapCanvas"></canvas>
+    </div>
+
+    <!-- RIGHT -->
+    <div class="right-panel">
+      <div class="r-card">
+        <h4>📊 Zone Counts</h4>
+        <div id="zoneCounts"></div>
+      </div>
+      <div class="r-card">
+        <h4>🗺️ Legend</h4>
+        <div class="leg-row"><div class="leg-dot" style="background:#4e8c38"></div>Safari Savanna</div>
+        <div class="leg-row"><div class="leg-dot" style="background:#1e6e9e"></div>Aquatic Zone</div>
+        <div class="leg-row"><div class="leg-dot" style="background:#3a7a28"></div>Aviary Forest</div>
+        <div class="leg-row"><div class="leg-dot" style="background:#8a6030"></div>Desert Reptile</div>
+        <div class="leg-row"><div class="leg-dot" style="background:#4a3470"></div>Nocturnal</div>
+      </div>
+      <div class="r-card">
+        <h4>ℹ️ Tips</h4>
+        <div style="color:var(--muted);font-size:0.78rem;line-height:1.8;">
+          🖱️ Drag from left list<br>
+          🎯 Drop onto any zone<br>
+          👆 Click animal to highlight<br>
+          💾 Save persists to MySQL
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<div class="tooltip" id="tooltip">
+  <div class="tooltip-name" id="ttName"></div>
+  <div class="tooltip-info" id="ttInfo"></div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+var token = localStorage.getItem('token');
+var user  = JSON.parse(localStorage.getItem('user') || '{}');
+if (!token) window.location.href = '/login';
+document.getElementById('userName').textContent  = user.name || 'Staff';
+document.getElementById('userRole').textContent  = user.role || 'staff';
+document.getElementById('userAvatar').textContent = (user.name||'A')[0].toUpperCase();
+
+/* ── CONFIG ── */
+var EMOJI = { mammal:'🦁', bird:'🦜', reptile:'🦎', fish:'🐟', amphibian:'🐸', invertebrate:'🦋' };
+var DEF_ZONE = { mammal:'safari', bird:'aviary', reptile:'desert', fish:'aquatic', amphibian:'nocturnal', invertebrate:'aviary' };
+var HEALTH_COLOR = { healthy:'#2daa5a', recovering:'#e6a020', sick:'#d03030', critical:'#ff2020' };
+
+/* Zone definitions — x,y,w,h as fractions of canvas size */
+var ZONE_DEFS = [
+  { id:'safari',   label:'🌿 Safari',    fx:0.02, fy:0.04, fw:0.44, fh:0.44,
+    groundColor:'#2d5a18', grassColor:'#3a7520', borderColor:'#6ab040', pathColor:'#5a8830', waterColor:null    },
+  { id:'aquatic',  label:'🌊 Aquatic',   fx:0.54, fy:0.04, fw:0.44, fh:0.44,
+    groundColor:'#0d3d5e', grassColor:'#1a6a8e', borderColor:'#2eaacc', pathColor:null,       waterColor:'#1a5a80'},
+  { id:'aviary',   label:'🦜 Aviary',    fx:0.02, fy:0.54, fw:0.29, fh:0.43,
+    groundColor:'#1e4a10', grassColor:'#2d6818', borderColor:'#5aaa30', pathColor:null,       waterColor:null    },
+  { id:'desert',   label:'🦎 Reptile',   fx:0.35, fy:0.54, fw:0.30, fh:0.43,
+    groundColor:'#6a4a18', grassColor:'#8a6828', borderColor:'#c8943a', pathColor:null,       waterColor:null    },
+  { id:'nocturnal',label:'🌙 Nocturnal', fx:0.69, fy:0.54, fw:0.29, fh:0.43,
+    groundColor:'#1e1030', grassColor:'#2e1848', borderColor:'#8060c0', pathColor:null,       waterColor:null    }
+];
+
+/* ── CANVAS SETUP ── */
+var canvas = document.getElementById('mapCanvas');
+var ctx    = canvas.getContext('2d');
+var CW, CH;
+
+function resizeCanvas() {
+  var wrap = canvas.parentElement;
+  CW = canvas.width  = wrap.clientWidth  || 700;
+  CH = canvas.height = Math.round(CW * 0.72);
+  buildZones();
+  renderMap();
+}
+
+/* ── STATE ── */
+var zones    = [];   // built from ZONE_DEFS scaled to canvas
+var animals  = {};   // id → { animal, zone, token: {x,y,r} }
+var pending  = {};
+var dragId   = null;
+var dragSource = null;
+var hoverId  = null;
+var animFrame = 0;
+var ripples  = [];   // water ripple animations { x,y,r,alpha }
+
+/* ── BUILD ZONES ── */
+function buildZones() {
+  zones = ZONE_DEFS.map(function(d) {
+    return {
+      id:          d.id,
+      label:       d.label,
+      x:           d.fx * CW,
+      y:           d.fy * CH,
+      w:           d.fw * CW,
+      h:           d.fh * CH,
+      groundColor: d.groundColor,
+      grassColor:  d.grassColor,
+      borderColor: d.borderColor,
+      pathColor:   d.pathColor,
+      waterColor:  d.waterColor,
+      dragOver:    false
+    };
+  });
+}
+
+/* ── DRAW MAP ── */
+function renderMap() {
+  animFrame++;
+  ctx.clearRect(0, 0, CW, CH);
+
+  /* Base ground */
+  var groundGrad = ctx.createLinearGradient(0, 0, CW, CH);
+  groundGrad.addColorStop(0, '#0d1e08');
+  groundGrad.addColorStop(1, '#141f0a');
+  ctx.fillStyle = groundGrad;
+  ctx.fillRect(0, 0, CW, CH);
+
+  /* Paths between zones */
+  drawPaths();
+
+  /* Zones */
+  zones.forEach(function(z) { drawZone(z); });
+
+  /* Decorative: trees, rocks scattered in zones */
+  zones.forEach(function(z) { drawVegetation(z); });
+
+  /* Water effects */
+  var aq = zones.find(function(z){ return z.id === 'aquatic'; });
+  if (aq) drawWaterZone(aq);
+
+  /* Animal tokens */
+  layoutTokens();
+  Object.values(animals).forEach(function(item) { drawToken(item); });
+
+  /* Night overlay for nocturnal */
+  var noc = zones.find(function(z){ return z.id === 'nocturnal'; });
+  if (noc) drawNocturnalOverlay(noc);
+
+  /* Map border & title */
+  drawMapFrame();
+
+  requestAnimationFrame(renderMap);
+}
+
+/* ── DRAW PATHS ── */
+function drawPaths() {
+  ctx.strokeStyle = 'rgba(180,155,90,0.22)';
+  ctx.lineWidth   = CW * 0.018;
+  ctx.lineCap     = 'round';
+  // Horizontal mid path
+  ctx.beginPath();
+  ctx.moveTo(CW * 0.02, CH * 0.51);
+  ctx.lineTo(CW * 0.98, CH * 0.51);
+  ctx.stroke();
+  // Vertical mid path
+  ctx.beginPath();
+  ctx.moveTo(CW * 0.5, CH * 0.04);
+  ctx.lineTo(CW * 0.5, CH * 0.97);
+  ctx.stroke();
+  ctx.lineWidth = 1;
+}
+
+/* ── DRAW ZONE ── */
+function drawZone(z) {
+  var r = 14;
+  ctx.save();
+
+  /* Ground fill */
+  var grad = ctx.createLinearGradient(z.x, z.y, z.x + z.w, z.y + z.h);
+  grad.addColorStop(0, z.groundColor + 'ff');
+  grad.addColorStop(0.6, z.grassColor + 'cc');
+  grad.addColorStop(1, z.groundColor + 'aa');
+  ctx.beginPath();
+  ctx.roundRect(z.x, z.y, z.w, z.h, r);
+  ctx.fillStyle = grad;
+  ctx.fill();
+
+  /* Inner texture — subtle grid of grass tufts */
+  drawGrassTufts(z);
+
+  /* Border glow when drag-over */
+  if (z.dragOver) {
+    ctx.shadowColor  = z.borderColor;
+    ctx.shadowBlur   = 24;
+    ctx.strokeStyle  = z.borderColor;
+    ctx.lineWidth    = 3;
+    ctx.setLineDash([]);
+  } else {
+    ctx.shadowBlur   = 0;
+    ctx.strokeStyle  = z.borderColor + '88';
+    ctx.lineWidth    = 1.5;
+    ctx.setLineDash([8, 5]);
+  }
+  ctx.beginPath();
+  ctx.roundRect(z.x, z.y, z.w, z.h, r);
+  ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.shadowBlur = 0;
+
+  /* Zone label */
+  ctx.fillStyle = 'rgba(255,255,255,' + (z.dragOver ? '0.9' : '0.5') + ')';
+  ctx.font      = 'bold ' + Math.round(CW * 0.016) + 'px Crimson Pro, serif';
+  ctx.textAlign = 'center';
+  ctx.fillText(z.label, z.x + z.w / 2, z.y + Math.round(CW * 0.026));
+
+  ctx.restore();
+}
+
+/* ── GRASS TUFTS ── */
+function drawGrassTufts(z) {
+  ctx.save();
+  ctx.beginPath();
+  ctx.roundRect(z.x + 2, z.y + 2, z.w - 4, z.h - 4, 12);
+  ctx.clip();
+  var spacing = CW * 0.04;
+  var cols = Math.floor(z.w / spacing);
+  var rows = Math.floor(z.h / spacing);
+  ctx.strokeStyle = z.grassColor + '55';
+  ctx.lineWidth   = 1;
+  for (var row = 1; row < rows; row++) {
+    for (var col = 1; col < cols; col++) {
+      var tx = z.x + col * spacing + (row % 2 === 0 ? spacing * 0.3 : 0);
+      var ty = z.y + row * spacing;
+      if (tx > z.x + 10 && tx < z.x + z.w - 10 && ty > z.y + 20 && ty < z.y + z.h - 10) {
+        ctx.beginPath();
+        ctx.moveTo(tx, ty);
+        ctx.lineTo(tx - 3, ty - 6 + Math.sin(animFrame * 0.04 + col) * 1.5);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(tx + 4, ty);
+        ctx.lineTo(tx + 2, ty - 5 + Math.sin(animFrame * 0.04 + row) * 1.5);
+        ctx.stroke();
+      }
+    }
+  }
+  ctx.restore();
+}
+
+/* ── WATER ZONE ── */
+function drawWaterZone(z) {
+  ctx.save();
+  ctx.beginPath();
+  ctx.roundRect(z.x + 2, z.y + 2, z.w - 4, z.h - 4, 12);
+  ctx.clip();
+
+  /* Animated water shimmer */
+  var t = animFrame * 0.025;
+  for (var row = 0; row < 8; row++) {
+    var wy  = z.y + z.h * 0.1 + row * (z.h * 0.1);
+    var amp = 4 + Math.sin(t + row * 0.8) * 2;
+    ctx.beginPath();
+    ctx.moveTo(z.x + 5, wy);
+    for (var wx = z.x + 5; wx < z.x + z.w - 5; wx += 8) {
+      ctx.lineTo(wx, wy + Math.sin((wx - z.x) * 0.04 + t + row) * amp);
+    }
+    ctx.strokeStyle = 'rgba(100,200,255,' + (0.06 + row * 0.01) + ')';
+    ctx.lineWidth   = 1.2;
+    ctx.stroke();
+  }
+
+  /* Ripple circles */
+  if (Math.random() < 0.015) {
+    ripples.push({
+      x: z.x + z.w * 0.2 + Math.random() * z.w * 0.6,
+      y: z.y + z.h * 0.3 + Math.random() * z.h * 0.4,
+      r: 3, alpha: 0.6
+    });
+  }
+  ripples = ripples.filter(function(rip) {
+    ctx.beginPath();
+    ctx.arc(rip.x, rip.y, rip.r, 0, Math.PI * 2);
+    ctx.strokeStyle = 'rgba(150,220,255,' + rip.alpha + ')';
+    ctx.lineWidth   = 1;
+    ctx.stroke();
+    rip.r     += 0.7;
+    rip.alpha -= 0.018;
+    return rip.alpha > 0 && rip.r < 40;
+  });
+
+  ctx.restore();
+}
+
+/* ── NOCTURNAL OVERLAY ── */
+function drawNocturnalOverlay(z) {
+  ctx.save();
+  ctx.beginPath();
+  ctx.roundRect(z.x + 2, z.y + 2, z.w - 4, z.h - 4, 12);
+  ctx.clip();
+  ctx.fillStyle = 'rgba(5,0,20,0.45)';
+  ctx.fill();
+  /* Stars */
+  for (var i = 0; i < 18; i++) {
+    var sx = z.x + (i * 61 % (z.w - 20)) + 10;
+    var sy = z.y + (i * 43 % (z.h * 0.55)) + 22;
+    var sr = 0.8 + Math.sin(animFrame * 0.06 + i * 1.2) * 0.5;
+    ctx.beginPath();
+    ctx.arc(sx, sy, sr, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(255,255,200,' + (0.4 + Math.sin(animFrame * 0.06 + i) * 0.3) + ')';
+    ctx.fill();
+  }
+  /* Fireflies */
+  for (var i = 0; i < 8; i++) {
+    var fx = z.x + 20 + ((i * 79 + animFrame * 0.4) % (z.w - 40));
+    var fy = z.y + z.h * 0.2 + ((i * 53 + animFrame * 0.25) % (z.h * 0.65));
+    var fa = (Math.sin(animFrame * 0.12 + i * 2) + 1) / 2;
+    var fg = ctx.createRadialGradient(fx, fy, 0, fx, fy, 8);
+    fg.addColorStop(0, 'rgba(160,255,80,' + fa + ')');
+    fg.addColorStop(1, 'transparent');
+    ctx.fillStyle = fg;
+    ctx.beginPath();
+    ctx.arc(fx, fy, 8, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.restore();
+}
+
+/* ── VEGETATION ── */
+function drawVegetation(z) {
+  ctx.save();
+  ctx.beginPath();
+  ctx.roundRect(z.x + 2, z.y + 2, z.w - 4, z.h - 4, 12);
+  ctx.clip();
+
+  var seed = z.id.charCodeAt(0) + z.id.charCodeAt(z.id.length-1);
+  var count = z.id === 'aquatic' ? 6 : z.id === 'nocturnal' ? 4 : 10;
+
+  for (var i = 0; i < count; i++) {
+    var tx = z.x + 15 + ((seed * 37 * (i+1)) % (z.w - 30));
+    var ty = z.y + 28 + ((seed * 53 * (i+1)) % (z.h - 36));
+    var tr = 8 + ((seed * 11 * (i+1)) % 14);
+
+    if (z.id === 'desert') {
+      /* Cactus */
+      ctx.fillStyle = '#3a6a20';
+      ctx.fillRect(tx - 2, ty - tr * 1.8, 5, tr * 1.8);
+      ctx.fillRect(tx - tr * 0.7, ty - tr, tr * 0.65, 4);
+      ctx.fillRect(tx + 2, ty - tr * 0.8, tr * 0.55, 4);
+    } else if (z.id === 'aquatic') {
+      /* Reed */
+      var sway = Math.sin(animFrame * 0.03 + i) * 3;
+      ctx.strokeStyle = '#2a6a28';
+      ctx.lineWidth   = 2;
+      ctx.beginPath();
+      ctx.moveTo(tx, ty);
+      ctx.quadraticCurveTo(tx + sway, ty - tr, tx + sway * 0.6, ty - tr * 2);
+      ctx.stroke();
+    } else {
+      /* Tree */
+      var sway = Math.sin(animFrame * 0.02 + i * 0.8) * 1.5;
+      /* Trunk */
+      ctx.fillStyle = z.id === 'nocturnal' ? '#1a0a2a' : '#3a2008';
+      ctx.fillRect(tx - 2.5 + sway * 0.3, ty - tr * 0.4, 5, tr * 0.6);
+      /* Canopy */
+      var leafC = z.id === 'nocturnal' ? '#120820' : z.id === 'aviary' ? '#1a4a10' : '#1e5c10';
+      [tr * 1.4, tr * 1.1, tr * 0.75].forEach(function(lr, li) {
+        ctx.beginPath();
+        ctx.arc(tx + sway * (0.3 + li * 0.15), ty - tr * 0.3 - li * tr * 0.28, lr, 0, Math.PI * 2);
+        ctx.fillStyle = li === 1 ? leafC : leafC + 'cc';
+        ctx.fill();
+      });
+    }
+  }
+
+  /* Rocks */
+  for (var i = 0; i < 5; i++) {
+    var rx2 = z.x + 20 + ((seed * 71 * (i+3)) % (z.w - 40));
+    var ry2 = z.y + 30 + ((seed * 83 * (i+3)) % (z.h - 40));
+    var rw  = 6 + ((seed * 7 * (i+1)) % 12);
+    var rh  = 4 + ((seed * 5 * (i+1)) % 8);
+    ctx.fillStyle = z.id === 'desert' ? '#7a6040' : z.id === 'aquatic' ? '#2a4a5a' : '#3a4a30';
+    ctx.beginPath();
+    ctx.ellipse(rx2, ry2, rw, rh, seed * i * 0.3, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = 'rgba(255,255,255,0.06)';
+    ctx.beginPath();
+    ctx.ellipse(rx2 - rw * 0.25, ry2 - rh * 0.3, rw * 0.4, rh * 0.3, 0, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.restore();
+}
+
+/* ── MAP FRAME ── */
+function drawMapFrame() {
+  /* Outer decorative border */
+  var borderGrad = ctx.createLinearGradient(0, 0, CW, CH);
+  borderGrad.addColorStop(0, 'rgba(201,168,76,0.5)');
+  borderGrad.addColorStop(0.5, 'rgba(201,168,76,0.2)');
+  borderGrad.addColorStop(1, 'rgba(201,168,76,0.5)');
+  ctx.strokeStyle = borderGrad;
+  ctx.lineWidth   = 2;
+  ctx.strokeRect(1, 1, CW - 2, CH - 2);
+
+  /* Corner ornaments */
+  var cs  = 14;
+  var corners = [[4,4],[CW-4,4],[4,CH-4],[CW-4,CH-4]];
+  corners.forEach(function(c, i) {
+    var dx = i % 2 === 0 ? 1 : -1;
+    var dy = i < 2 ? 1 : -1;
+    ctx.strokeStyle = 'rgba(201,168,76,0.7)';
+    ctx.lineWidth   = 2;
+    ctx.beginPath();
+    ctx.moveTo(c[0], c[1] + dy * cs);
+    ctx.lineTo(c[0], c[1]);
+    ctx.lineTo(c[0] + dx * cs, c[1]);
+    ctx.stroke();
+  });
+
+  /* Title banner */
+  ctx.fillStyle = 'rgba(10,26,14,0.75)';
+  var bw = CW * 0.38, bh = 28, bx = (CW - bw) / 2, by = 8;
+  ctx.fillRect(bx, by, bw, bh);
+  ctx.strokeStyle = 'rgba(201,168,76,0.4)';
+  ctx.lineWidth   = 1;
+  ctx.strokeRect(bx, by, bw, bh);
+  ctx.fillStyle   = 'rgba(232,200,110,0.9)';
+  ctx.font        = 'bold ' + Math.round(CW * 0.018) + 'px Playfair Display, serif';
+  ctx.textAlign   = 'center';
+  ctx.fillText('🦁  DIGITAL ZOO — ZONE MAP', CW / 2, by + 19);
+}
+
+/* ── ANIMAL TOKENS ── */
+function layoutTokens() {
+  /* Assign positions within zones */
+  var zoneItems = {};
+  Object.values(animals).forEach(function(item) {
+    var zid = item.zone;
+    if (!zoneItems[zid]) zoneItems[zid] = [];
+    zoneItems[zid].push(item);
+  });
+
+  Object.keys(zoneItems).forEach(function(zid) {
+    var zone  = zones.find(function(z){ return z.id === zid; });
+    if (!zone) return;
+    var items = zoneItems[zid];
+    var cols  = Math.ceil(Math.sqrt(items.length * 1.4));
+    var margin = CW * 0.025;
+    var cellW  = (zone.w - margin * 2) / Math.max(cols, 1);
+    var cellH  = 38;
+    var startY = zone.y + 32;
+
+    items.forEach(function(item, idx) {
+      var col = idx % cols;
+      var row = Math.floor(idx / cols);
+      item.token = {
+        x: zone.x + margin + col * cellW + cellW / 2,
+        y: startY + row * cellH,
+        r: Math.round(CW * 0.018)
+      };
+    });
+  });
+}
+
+function drawToken(item) {
+  if (!item.token) return;
+  var t  = item.token;
+  var hc = HEALTH_COLOR[item.animal.health_status] || '#2daa5a';
+  var em = EMOJI[item.animal.category] || '🐾';
+  var isHovered   = hoverId  === item.animal.id;
+  var isSelected  = dragId   === item.animal.id;
+  var scale = isHovered ? 1.2 : 1;
+
+  ctx.save();
+  ctx.translate(t.x, t.y);
+  ctx.scale(scale, scale);
+
+  /* Shadow */
+  ctx.fillStyle = 'rgba(0,0,0,0.35)';
+  ctx.beginPath();
+  ctx.ellipse(0, t.r * 0.7, t.r * 0.55, t.r * 0.2, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  /* Health ring */
+  if (item.animal.health_status !== 'healthy') {
+    ctx.beginPath();
+    ctx.arc(0, 0, t.r + 5, 0, Math.PI * 2);
+    ctx.fillStyle = hc + '30';
+    ctx.fill();
+  }
+
+  /* Hover ring */
+  if (isHovered) {
+    ctx.beginPath();
+    ctx.arc(0, 0, t.r + 7, 0, Math.PI * 2);
+    ctx.strokeStyle = 'rgba(201,168,76,0.8)';
+    ctx.lineWidth   = 2;
+    ctx.setLineDash([4, 3]);
+    ctx.stroke();
+    ctx.setLineDash([]);
+  }
+
+  /* Emoji */
+  ctx.font = t.r * 1.6 + 'px serif';
+  ctx.textAlign    = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(em, 0, 0);
+
+  /* Health dot */
+  ctx.beginPath();
+  ctx.arc(t.r * 0.55, -t.r * 0.55, 3.5, 0, Math.PI * 2);
+  ctx.fillStyle = hc;
+  ctx.fill();
+
+  /* Name tag */
+  if (isHovered || isSelected) {
+    var nm = item.animal.name;
+    var nw = ctx.measureText(nm).width + 10;
+    ctx.fillStyle = 'rgba(10,26,14,0.9)';
+    ctx.beginPath();
+    ctx.roundRect(-nw/2, t.r + 2, nw, 14, 4);
+    ctx.fill();
+    ctx.fillStyle = '#e8c86e';
+    ctx.font = '9px Crimson Pro, serif';
+    ctx.fillText(nm, 0, t.r + 10);
+  }
+
+  ctx.restore();
+}
+
+/* ── DRAG & DROP (mouse) ── */
+canvas.addEventListener('mousedown', function(e) {
+  var pos = getPos(e);
+  var hit = hitTest(pos.x, pos.y);
+  if (hit) {
+    dragId     = hit.animal.id;
+    dragSource = 'canvas';
+  }
+});
+
+canvas.addEventListener('mousemove', function(e) {
+  var pos = getPos(e);
+  if (dragId && dragSource === 'canvas') {
+    /* Move the token to mouse position */
+    var item = animals[dragId];
+    if (item && item.token) {
+      item.token.x = pos.x;
+      item.token.y = pos.y;
+    }
+    /* Highlight zones */
+    zones.forEach(function(z) {
+      z.dragOver = (pos.x > z.x && pos.x < z.x+z.w && pos.y > z.y && pos.y < z.y+z.h);
+    });
+  } else {
+    /* Hover */
+    var hit = hitTest(pos.x, pos.y);
+    hoverId = hit ? hit.animal.id : null;
+    canvas.style.cursor = hit ? 'grab' : 'default';
+    if (hit) showTooltip(e, hit);
+    else hideTooltip();
+  }
+});
+
+canvas.addEventListener('mouseup', function(e) {
+  if (!dragId || dragSource !== 'canvas') return;
+  var pos = getPos(e);
+  zones.forEach(function(z) { z.dragOver = false; });
+  var targetZone = zones.find(function(z) {
+    return pos.x > z.x && pos.x < z.x+z.w && pos.y > z.y && pos.y < z.y+z.h;
+  });
+  if (targetZone && animals[dragId]) {
+    var oldZone = animals[dragId].zone;
+    if (oldZone !== targetZone.id) {
+      animals[dragId].zone = targetZone.id;
+      pending[dragId] = targetZone.id;
+      updateBadge();
+      showToast('Moved to ' + targetZone.label + ' — click Save to persist');
+      updateRowZone(dragId, targetZone.id);
+    }
+  }
+  dragId = null;
+  dragSource = null;
+  canvas.style.cursor = 'default';
+  renderCounts();
+});
+
+canvas.addEventListener('mouseleave', function() {
+  hoverId = null;
+  if (dragId) { dragId = null; dragSource = null; zones.forEach(function(z){ z.dragOver=false; }); }
+  hideTooltip();
+});
+
+function getPos(e) {
+  var rect = canvas.getBoundingClientRect();
+  var scaleX = CW / rect.width;
+  var scaleY = CH / rect.height;
+  return { x: (e.clientX - rect.left) * scaleX, y: (e.clientY - rect.top) * scaleY };
+}
+
+function hitTest(mx, my) {
+  return Object.values(animals).find(function(item) {
+    if (!item.token) return false;
+    return Math.hypot(item.token.x - mx, item.token.y - my) < item.token.r * 1.2;
+  }) || null;
+}
+
+/* ── LIST DRAG from left panel ── */
+function rowDragStart(e, id) {
+  dragId     = id;
+  dragSource = 'list';
+  document.getElementById('row-'+id) && document.getElementById('row-'+id).classList.add('dragging');
+  e.dataTransfer.effectAllowed = 'move';
+  e.dataTransfer.setData('text/plain', id);
+}
+function rowDragEnd(e, id) {
+  document.getElementById('row-'+id) && document.getElementById('row-'+id).classList.remove('dragging');
+  dragId = null; dragSource = null;
+  zones.forEach(function(z){ z.dragOver = false; });
+}
+
+canvas.addEventListener('dragover', function(e) {
+  e.preventDefault();
+  var pos = getPos(e);
+  zones.forEach(function(z) {
+    z.dragOver = (pos.x > z.x && pos.x < z.x+z.w && pos.y > z.y && pos.y < z.y+z.h);
+  });
+});
+canvas.addEventListener('dragleave', function() {
+  zones.forEach(function(z){ z.dragOver = false; });
+});
+canvas.addEventListener('drop', function(e) {
+  e.preventDefault();
+  var id = parseInt(e.dataTransfer.getData('text/plain'));
+  if (!id || !animals[id]) return;
+  var pos = getPos(e);
+  zones.forEach(function(z){ z.dragOver = false; });
+  var target = zones.find(function(z) {
+    return pos.x > z.x && pos.x < z.x+z.w && pos.y > z.y && pos.y < z.y+z.h;
+  });
+  if (target && animals[id].zone !== target.id) {
+    animals[id].zone = target.id;
+    pending[id] = target.id;
+    updateBadge();
+    showToast('Moved to ' + target.label);
+    updateRowZone(id, target.id);
+    renderCounts();
+  }
+  dragId = null; dragSource = null;
+});
+
+/* ── SAVE ── */
+function saveAll() {
+  var ids = Object.keys(pending);
+  if (!ids.length) { showToast('No changes to save'); return; }
+  var btn = document.getElementById('saveBtn');
+  var sp  = document.getElementById('spinWrap');
+  btn.disabled = true; sp.classList.add('show');
+  Promise.all(ids.map(function(id) {
+    return fetch('/api/dashboard/zone/'+id, {
+      method:'PUT', headers:{'Authorization':'Bearer '+token,'Content-Type':'application/json'},
+      body:JSON.stringify({ zone: pending[id] })
+    }).then(function(r){ return r.json(); });
+  }))
+  .then(function() {
+    pending = {}; updateBadge();
+    showToast('✅ Saved ' + ids.length + ' animal' + (ids.length!==1?'s':'') + ' to database!');
+  })
+  .catch(function() { showToast('Save failed', 'error'); })
+  .finally(function() { btn.disabled=false; sp.classList.remove('show'); });
+}
+
+/* ── TOOLTIP ── */
+function showTooltip(e, item) {
+  var tip = document.getElementById('tooltip');
+  document.getElementById('ttName').textContent  = (EMOJI[item.animal.category]||'🐾') + ' ' + item.animal.name;
+  document.getElementById('ttInfo').innerHTML    = item.animal.species + '<br>Zone: ' + item.zone + ' · Health: ' + item.animal.health_status;
+  tip.style.display = 'block';
+  tip.style.left    = (e.clientX + 14) + 'px';
+  tip.style.top     = (e.clientY - 10) + 'px';
+}
+function hideTooltip() {
+  document.getElementById('tooltip').style.display = 'none';
+}
+
+/* ── HELPERS ── */
+function updateRowZone(id, zone) {
+  var row = document.getElementById('row-'+id);
+  if (!row) return;
+  var zoneEl = row.querySelector('.row-zone');
+  if (zoneEl) {
+    var z = ZONE_DEFS.find(function(z){ return z.id === zone; });
+    zoneEl.textContent = zone;
+    zoneEl.style.color = z ? z.borderColor : '#8a9e8e';
+  }
+}
+
+function updateBadge() {
+  var n  = Object.keys(pending).length;
+  var el = document.getElementById('badge');
+  el.style.display = n > 0 ? 'inline-block' : 'none';
+  el.textContent   = n;
+}
+
+function renderCounts() {
+  var counts = {};
+  ZONE_DEFS.forEach(function(z){ counts[z.id] = 0; });
+  Object.values(animals).forEach(function(item){ counts[item.zone] = (counts[item.zone]||0)+1; });
+  document.getElementById('zoneCounts').innerHTML = ZONE_DEFS.map(function(z){
+    return '<div class="zone-row">' +
+      '<span style="color:var(--cream);font-size:0.78rem">' + z.label + '</span>' +
+      '<span style="color:' + z.borderColor + ';font-family:Playfair Display,serif;font-size:1rem">' + (counts[z.id]||0) + '</span>' +
+    '</div>';
+  }).join('');
+}
+
+function showToast(msg, type) {
+  var t = document.getElementById('toast');
+  t.textContent = msg; t.className = 'toast '+(type||'success')+' show';
+  setTimeout(function(){ t.classList.remove('show'); }, 3000);
+}
+
+/* ── LOAD ANIMALS ── */
+var DEFAULT_ZONE = { mammal:'safari', bird:'aviary', reptile:'desert', fish:'aquatic', amphibian:'nocturnal', invertebrate:'aviary' };
+
+fetch('/api/animals?limit=100', { headers: { 'Authorization': 'Bearer ' + token } })
+  .then(function(r){ return r.json(); })
+  .then(function(d) {
+    var list = d.data || [];
+    if (!list.length) {
+      document.getElementById('animalList').innerHTML = '<div style="color:#ff7070;font-size:0.82rem;text-align:center;padding:20px">No animals found.<br><a href="/animals" style="color:var(--gold)">Add animals →</a></div>';
+      return;
+    }
+    list.forEach(function(a) {
+      animals[a.id] = {
+        animal: a,
+        zone: a.zone_assignment || DEFAULT_ZONE[a.category] || 'safari'
+      };
+    });
+    renderCounts();
+
+    /* Render left panel */
+    document.getElementById('animalList').innerHTML = list.map(function(a) {
+      var zid = animals[a.id].zone;
+      var zd  = ZONE_DEFS.find(function(z){ return z.id === zid; });
+      return '<div class="animal-row" id="row-' + a.id + '" draggable="true" ' +
+        'ondragstart="rowDragStart(event,' + a.id + ')" ondragend="rowDragEnd(event,' + a.id + ')">' +
+        '<span class="row-emoji">' + (EMOJI[a.category]||'🐾') + '</span>' +
+        '<div style="flex:1;min-width:0;">' +
+          '<div class="row-name">' + a.name + '</div>' +
+          '<div class="row-zone" style="color:' + (zd ? zd.borderColor : '#8a9e8e') + '">' + zid + '</div>' +
+        '</div>' +
+      '</div>';
+    }).join('');
+  });
+
+/* Init */
+window.addEventListener('resize', resizeCanvas);
+resizeCanvas();
+</script>
+</body>
+</html>

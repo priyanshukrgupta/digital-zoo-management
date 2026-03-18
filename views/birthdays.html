@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+ 
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Digital Zoo — Birthday Tracker</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Crimson+Pro:wght@300;400;600&display=swap" rel="stylesheet">
+<style>
+  :root{--bg:#0a1a0e;--sidebar:#0d2414;--card:#0f2818;--card2:#122e1c;--gold:#c9a84c;--gold-light:#e8c86e;--cream:#f5ead5;--white:#faf7f0;--green:#2d6e3e;--muted:#8a9e8e;--danger:#c0392b;--border:rgba(201,168,76,0.15);}
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{font-family:'Crimson Pro',serif;background:var(--bg);color:var(--white);display:flex;min-height:100vh;}
+  .sidebar{width:260px;background:var(--sidebar);border-right:1px solid var(--border);display:flex;flex-direction:column;position:fixed;top:0;left:0;height:100vh;z-index:100;}
+  .sidebar-logo{padding:24px 20px;border-bottom:1px solid var(--border);}
+  .sidebar-logo h2{font-family:'Playfair Display',serif;background:linear-gradient(135deg,#c9a84c,#e8c86e);-webkit-background-clip:text;-webkit-text-fill-color:transparent;font-size:1.3rem;}
+  .sidebar-logo p{color:var(--muted);font-size:0.75rem;letter-spacing:2px;text-transform:uppercase;margin-top:2px;}
+  .nav{flex:1;padding:16px 0;overflow-y:auto;}
+  .nav-section{padding:8px 20px;color:var(--muted);font-size:0.7rem;letter-spacing:3px;text-transform:uppercase;margin-top:8px;}
+  .nav a{display:flex;align-items:center;gap:12px;padding:12px 20px;color:var(--muted);text-decoration:none;transition:all 0.2s;font-size:0.95rem;border-left:3px solid transparent;}
+  .nav a:hover,.nav a.active{color:var(--white);background:rgba(201,168,76,0.08);border-left-color:var(--gold);}
+  .nav a.active{color:var(--gold-light);}
+  .nav a .icon{width:20px;text-align:center;font-size:1.1rem;}
+  .sidebar-user{padding:16px 20px;border-top:1px solid var(--border);}
+  .user-info{display:flex;align-items:center;gap:10px;}
+  .user-avatar{width:36px;height:36px;background:linear-gradient(135deg,var(--gold),var(--green));border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:bold;color:var(--bg);}
+  .user-name{font-size:0.9rem;color:var(--cream);}
+  .user-role{font-size:0.75rem;color:var(--muted);text-transform:uppercase;}
+  .main{margin-left:260px;flex:1;padding:28px;}
+  .topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;flex-wrap:wrap;gap:12px;}
+  .topbar h1{font-family:'Playfair Display',serif;font-size:1.8rem;color:var(--cream);}
+  .grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:24px;}
+  .stat-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:18px;text-align:center;transition:all 0.3s;}
+  .stat-card:hover{border-color:rgba(201,168,76,0.3);}
+  .stat-icon{font-size:1.8rem;margin-bottom:6px;}
+  .stat-val{font-family:'Playfair Display',serif;font-size:2rem;color:var(--gold-light);}
+  .stat-label{color:var(--muted);font-size:0.75rem;text-transform:uppercase;letter-spacing:1px;margin-top:4px;}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:20px;}
+  .panel{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:22px;}
+  .panel h3{font-family:'Playfair Display',serif;color:var(--cream);margin-bottom:18px;font-size:1.1rem;}
+  .bday-card{display:flex;align-items:center;gap:14px;padding:14px;border-radius:12px;margin-bottom:10px;border:1px solid;transition:all 0.2s;cursor:pointer;text-decoration:none;}
+  .bday-card:hover{transform:translateX(4px);}
+  .bday-card.today{background:rgba(201,168,76,0.12);border-color:rgba(201,168,76,0.5);animation:glow 2s ease-in-out infinite alternate;}
+  .bday-card.soon{background:rgba(45,110,62,0.08);border-color:rgba(45,110,62,0.3);}
+  .bday-card.upcoming{background:rgba(13,36,20,0.5);border-color:var(--border);}
+  @keyframes glow{0%{box-shadow:0 0 8px rgba(201,168,76,0.3);}100%{box-shadow:0 0 20px rgba(201,168,76,0.7);}}
+  .bday-emoji{font-size:2rem;width:48px;text-align:center;flex-shrink:0;}
+  .bday-img{width:48px;height:48px;border-radius:10px;object-fit:cover;flex-shrink:0;}
+  .bday-info{flex:1;}
+  .bday-name{color:var(--cream);font-size:0.95rem;font-weight:600;}
+  .bday-species{color:var(--muted);font-size:0.8rem;font-style:italic;}
+  .bday-date{color:var(--muted);font-size:0.78rem;margin-top:2px;}
+  .bday-right{text-align:right;flex-shrink:0;}
+  .bday-age-num{font-family:'Playfair Display',serif;font-size:1.4rem;color:var(--gold-light);}
+  .bday-age-label{color:var(--muted);font-size:0.72rem;text-transform:uppercase;}
+  .days-badge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:0.72rem;font-weight:600;margin-top:4px;}
+  .days-badge.today{background:rgba(201,168,76,0.3);color:var(--gold);}
+  .days-badge.soon{background:rgba(45,110,62,0.3);color:#7eff90;}
+  .days-badge.upcoming{background:rgba(41,128,185,0.2);color:#74b9e7;}
+  /* Calendar */
+ .cal-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;}
+  .cal-nav{background:none;border:1px solid var(--border);color:var(--muted);width:28px;height:28px;border-radius:6px;cursor:pointer;font-size:0.9rem;transition:all 0.2s;}
+  .cal-nav:hover{border-color:var(--gold);color:var(--gold);}
+  .cal-month{font-family:'Playfair Display',serif;color:var(--cream);font-size:1rem;}
+  .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;}
+  .cal-day{aspect-ratio:1;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:0.78rem;position:relative;}
+  .cal-day.header{color:var(--muted);font-size:0.65rem;letter-spacing:1px;text-transform:uppercase;}
+  .cal-day.other{color:rgba(138,158,142,0.25);}
+  .cal-day.normal{color:var(--muted);}
+  .cal-day.today-cell{background:rgba(45,110,62,0.3);color:#7eff90;font-weight:bold;}
+  .cal-day.has-bday{background:rgba(201,168,76,0.2);color:var(--gold);border:1px solid rgba(201,168,76,0.4);cursor:pointer;font-weight:bold;}
+  .cal-day.has-bday::after{content:'🎂';position:absolute;top:-1px;right:-1px;font-size:0.5rem;}
+  /* Edit birthday modal */
+  .modal-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.7);z-index:999;display:none;align-items:center;justify-content:center;}
+  .modal-overlay.open{display:flex;}
+  .modal{background:#0d2414;border:1px solid var(--border);border-radius:20px;width:100%;max-width:480px;padding:28px;}
+  .modal h3{font-family:'Playfair Display',serif;color:var(--cream);margin-bottom:20px;}
+  .fg{margin-bottom:16px;}
+  .fg label{display:block;color:var(--gold-light);font-size:0.75rem;letter-spacing:2px;text-transform:uppercase;margin-bottom:7px;}
+  .fg input,.fg select{width:100%;background:rgba(10,26,14,0.7);border:1px solid var(--border);border-radius:10px;padding:12px 16px;color:var(--white);font-family:'Crimson Pro',serif;font-size:0.95rem;outline:none;}
+  .fg input:focus{border-color:var(--gold);}
+  .modal-foot{display:flex;gap:12px;justify-content:flex-end;margin-top:20px;}
+  .btn-cancel{background:rgba(255,255,255,0.05);border:1px solid var(--border);color:var(--muted);padding:10px 20px;border-radius:10px;cursor:pointer;font-family:'Crimson Pro',serif;}
+  .btn-save{background:linear-gradient(135deg,#c9a84c,#e8c86e);border:none;color:#0a1a0e;padding:10px 24px;border-radius:10px;font-family:'Crimson Pro',serif;font-weight:600;cursor:pointer;}
+  .btn-add{background:linear-gradient(135deg,#c9a84c,#e8c86e);border:none;color:#0a1a0e;padding:10px 22px;border-radius:10px;font-family:'Crimson Pro',serif;font-size:0.9rem;font-weight:600;cursor:pointer;transition:all 0.2s;}
+  .btn-add:hover{transform:translateY(-1px);}
+  .empty{color:var(--muted);text-align:center;padding:30px;font-size:0.9rem;}
+  .toast{position:fixed;bottom:30px;right:30px;background:rgba(45,110,62,0.9);border:1px solid rgba(45,110,62,0.6);color:#fff;padding:14px 22px;border-radius:12px;z-index:9999;transition:all 0.3s;transform:translateY(100px);opacity:0;}
+  .toast.show{transform:translateY(0);opacity:1;}
+  /* Confetti */
+  .confetti-piece{position:fixed;width:8px;height:8px;border-radius:2px;pointer-events:none;z-index:9998;animation:fall linear forwards;}
+  @keyframes fall{0%{opacity:1;transform:translateY(-10px) rotate(0);}100%{opacity:0;transform:translateY(100vh) rotate(720deg);}}
+  .no-bday-note{background:rgba(41,128,185,0.1);border:1px solid rgba(41,128,185,0.3);border-radius:10px;padding:12px 16px;color:#74b9e7;font-size:0.85rem;margin-bottom:16px;}*/
+</style>
+</head>
+<body>
+<aside class="sidebar">
+  <div class="sidebar-logo"><h2>🦁 DIGITAL ZOO</h2><p>Admin System</p></div>
+  <nav class="nav">
+    <div class="nav-section">Main</div>
+    <a href="/dashboard"><span class="icon">📊</span> Dashboard</a>
+    <a href="/animals"><span class="icon">🐾</span> Animals</a>
+    <a href="/adoptions"><span class="icon">🤝</span> Adoptions</a>
+    <a href="/medications"><span class="icon">💊</span> Medical Records</a>
+    <div class="nav-section">Unique Features</div>
+    <a href="/ai-health"><span class="icon">🤖</span> AI Health Predictor</a>
+    <a href="/zoo-map"><span class="icon">🗺️</span> Zoo Map</a>
+    <a href="/leaderboard"><span class="icon">🏆</span> Leaderboard</a>
+    <a href="/simulation"><span class="icon">🎮</span> Zoo Simulation</a>
+    <a href="/qr-codes"><span class="icon">📱</span> QR Codes</a>
+    <a href="/world-map"><span class="icon">🌍</span> Origin Map</a>
+    <a href="/birthdays" class="active"><span class="icon">🎂</span> Birthdays</a>
+    <a href="/activity-monitor"><span class="icon">⚡</span> Activity Monitor</a>
+    <div class="nav-section">Management</div>
+    <a href="/reports"><span class="icon">📈</span> Reports</a>
+  </nav>
+  <div class="sidebar-user">
+    <div class="user-info">
+      <div class="user-avatar" id="userAvatar">A</div>
+      <div><div class="user-name" id="userName">Loading...</div><div class="user-role" id="userRole">---</div></div>
+    </div>
+  </div>
+</aside>
+
+<main class="main">
+  <div class="topbar">
+    <div>
+      <h1>🎂 Birthday Tracker</h1>
+      <p style="color:var(--muted);font-size:0.9rem;margin-top:4px">Real birth dates from database — never miss a birthday</p>
+    </div>
+    <button class="btn-add" onclick="openEditModal()">+ Set Birthday</button>
+  </div>
+
+  <div class="grid3">
+    <div class="stat-card"><div class="stat-icon">🎉</div><div class="stat-val" id="todayCount">0</div><div class="stat-label">Today's Birthdays</div></div>
+    <div class="stat-card"><div class="stat-icon">📅</div><div class="stat-val" id="weekCount">0</div><div class="stat-label">This Week</div></div>
+    <div class="stat-card"><div class="stat-icon">🗓️</div><div class="stat-val" id="monthCount">0</div><div class="stat-label">This Month</div></div>
+  </div>
+
+  <div class="grid2">
+    <div class="panel">
+      <h3>🎉 Upcoming Birthdays</h3>
+      <div class="no-bday-note" id="noBdayNote" style="display:none">
+        ℹ️ Some animals have no birth date set. <a href="#" onclick="openEditModal()" style="color:var(--gold)">Add birth dates →</a>
+      </div>
+      <div id="upcomingList"><div class="empty">Loading from database...</div></div>
+    </div>
+    <div class="panel">
+      <div class="cal-header">
+        <button class="cal-nav" onclick="changeMonth(-1)">◀</button>
+        <div class="cal-month" id="calTitle"></div>
+        <button class="cal-nav" onclick="changeMonth(1)">▶</button>
+      </div>
+      <div class="cal-grid" id="calGrid"></div>
+    </div>
+  </div>
+</main>
+
+<!-- Set Birthday Modal -->
+<div class="modal-overlay" id="editModal">
+  <div class="modal">
+    <h3>🎂 Set Animal Birth Date</h3>
+    <div class="fg">
+      <label>Select Animal</label>
+      <select id="editAnimal"></select>
+    </div>
+    <div class="fg">
+      <label>Birth Date</label>
+      <input type="date" id="editDate">
+    </div>
+    <div class="modal-foot">
+      <button class="btn-cancel" onclick="closeEditModal()">Cancel</button>
+      <button class="btn-save" onclick="saveBirthday()">Save Birthday</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+var token = localStorage.getItem('token');
+var user  = JSON.parse(localStorage.getItem('user') || '{}');
+if (!token) window.location.href = '/login';
+document.getElementById('userName').textContent  = user.name || 'Staff';
+document.getElementById('userRole').textContent  = user.role || 'staff';
+document.getElementById('userAvatar').textContent = (user.name || 'A')[0].toUpperCase();
+
+var EMOJI = { mammal:'🦁', bird:'🦜', reptile:'🦎', fish:'🐟', amphibian:'🐸', invertebrate:'🦋' };
+var MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+var today  = new Date();
+var calDate = new Date(today.getFullYear(), today.getMonth(), 1);
+var allBdays = [], allAnimals = [];
+
+function load() {
+  fetch('/api/dashboard/birthdays', { headers: { 'Authorization': 'Bearer ' + token } })
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+      allBdays = d.data || [];
+      renderStats();
+      renderUpcoming();
+      renderCalendar();
+      checkToday();
+    })
+    .catch(function(){ showToast('Failed to load birthday data', 'error'); });
+}
+
+function renderStats() {
+  var todayN = allBdays.filter(function(a){ return a.days_until_birthday == 0; }).length;
+  var weekN  = allBdays.filter(function(a){ return a.days_until_birthday >= 0 && a.days_until_birthday <= 7; }).length;
+  var monthN = allBdays.filter(function(a){ return a.days_until_birthday >= 0 && a.days_until_birthday <= 30; }).length;
+  document.getElementById('todayCount').textContent = todayN;
+  document.getElementById('weekCount').textContent  = weekN;
+  document.getElementById('monthCount').textContent = monthN;
+}
+
+function renderUpcoming() {
+  var upcoming = allBdays.filter(function(a){ return a.days_until_birthday >= 0 && a.days_until_birthday <= 60; });
+  var ul = document.getElementById('upcomingList');
+  if (!upcoming.length) {
+    ul.innerHTML = '<div class="empty">No upcoming birthdays in the next 60 days<br><br>Make sure to add birth dates to animals first.</div>';
+    document.getElementById('noBdayNote').style.display = 'block';
+    return;
+  }
+  ul.innerHTML = upcoming.map(function(a){
+    var days = parseInt(a.days_until_birthday);
+    var cls  = days === 0 ? 'today' : days <= 7 ? 'soon' : 'upcoming';
+    var badge = days === 0 ? '🎉 TODAY!' : days === 1 ? '🌅 Tomorrow' : 'In ' + days + ' days';
+    var bdgCls = days === 0 ? 'today' : days <= 7 ? 'soon' : 'upcoming';
+    var newAge = parseInt(a.current_age || 0) + (days === 0 ? 0 : 1);
+    var bdayFormatted = new Date(today.getFullYear(), parseInt(a.birth_month)-1, parseInt(a.birth_day))
+      .toLocaleDateString('en-IN', { day:'numeric', month:'long' });
+    return '<a href="/animal/' + a.id + '" class="bday-card ' + cls + '">' +
+      (a.image_url
+        ? '<img class="bday-img" src="' + a.image_url + '" onerror="this.outerHTML=\'<div class=bday-emoji>' + (EMOJI[a.category]||'🐾') + '</div>\'">'
+        : '<div class="bday-emoji">' + (EMOJI[a.category]||'🐾') + '</div>') +
+      '<div class="bday-info">' +
+        '<div class="bday-name">' + a.name + '</div>' +
+        '<div class="bday-species">' + a.species + '</div>' +
+        '<div class="bday-date">📅 ' + bdayFormatted + '</div>' +
+        '<span class="days-badge ' + bdgCls + '">' + badge + '</span>' +
+      '</div>' +
+      '<div class="bday-right">' +
+        '<div class="bday-age-num">' + newAge + '</div>' +
+        '<div class="bday-age-label">years old</div>' +
+      '</div>' +
+    '</a>';
+  }).join('');
+}
+
+function renderCalendar() {
+  document.getElementById('calTitle').textContent = MONTHS[calDate.getMonth()] + ' ' + calDate.getFullYear();
+  var bdayDays = {};
+  allBdays.forEach(function(a){
+    if (parseInt(a.birth_month) - 1 === calDate.getMonth()) {
+      var d = parseInt(a.birth_day);
+      if (!bdayDays[d]) bdayDays[d] = [];
+      bdayDays[d].push(a.name);
+    }
+  });
+
+  var DAYS = ['SUN','MON','TUE','WED','THU','FRI','SAT'];
+  var html = DAYS.map(function(d){ return '<div class="cal-day header">' + d + '</div>'; }).join('');
+  var firstDay    = new Date(calDate.getFullYear(), calDate.getMonth(), 1).getDay();
+  var daysInMonth = new Date(calDate.getFullYear(), calDate.getMonth()+1, 0).getDate();
+  var prevMonthDays = new Date(calDate.getFullYear(), calDate.getMonth(), 0).getDate();
+
+  for (var i = 0; i < firstDay; i++) {
+    html += '<div class="cal-day other">' + (prevMonthDays - firstDay + i + 1) + '</div>';
+  }
+  for (var d = 1; d <= daysInMonth; d++) {
+    var isToday = calDate.getMonth() === today.getMonth() && calDate.getFullYear() === today.getFullYear() && d === today.getDate();
+    var hasBday = bdayDays[d];
+    var cls = hasBday ? 'has-bday' : isToday ? 'today-cell' : 'normal';
+    var title = hasBday ? hasBday.join(', ') + "'s birthday!" : '';
+    html += '<div class="cal-day ' + cls + '" title="' + title + '">' + d + '</div>';
+  }
+  document.getElementById('calGrid').innerHTML = html;
+}
+
+function changeMonth(dir) {
+  calDate.setMonth(calDate.getMonth() + dir);
+  renderCalendar();
+}
+
+function checkToday() {
+  var todayBdays = allBdays.filter(function(a){ return parseInt(a.days_until_birthday) === 0; });
+  if (todayBdays.length > 0) launchConfetti();
+}
+
+function launchConfetti() {
+  var colors = ['#c9a84c','#e8c86e','#2d6e3e','#7eff90','#ff7070','#74b9e7'];
+  for (var i = 0; i < 80; i++) {
+    var p = document.createElement('div');
+    p.className = 'confetti-piece';
+    p.style.left = Math.random()*100 + 'vw';
+    p.style.top  = '-10px';
+    p.style.background = colors[Math.floor(Math.random()*colors.length)];
+    p.style.animationDuration  = (2 + Math.random()*3) + 's';
+    p.style.animationDelay     = Math.random()*2 + 's';
+    p.style.width  = (6 + Math.random()*8) + 'px';
+    p.style.height = (6 + Math.random()*8) + 'px';
+    document.body.appendChild(p);
+    setTimeout(function(el){ el.remove(); }, 6000, p);
+  }
+}
+
+// Edit modal — set birth date
+function openEditModal() {
+  fetch('/api/animals?limit=100', { headers: { 'Authorization': 'Bearer ' + token } })
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+      allAnimals = d.data || [];
+      var sel = document.getElementById('editAnimal');
+      sel.innerHTML = allAnimals.map(function(a){
+        return '<option value="' + a.id + '">' + a.name + ' (' + a.species + ')</option>';
+      }).join('');
+      document.getElementById('editDate').valueAsDate = new Date();
+      document.getElementById('editModal').classList.add('open');
+    });
+}
+
+function closeEditModal() {
+  document.getElementById('editModal').classList.remove('open');
+}
+
+function saveBirthday() {
+  var id   = document.getElementById('editAnimal').value;
+  var date = document.getElementById('editDate').value;
+  if (!id || !date) { showToast('Please select animal and date', 'error'); return; }
+
+  // Use dedicated PATCH endpoint — no multipart issues
+  fetch('/api/animals/' + id + '/birthday', {
+    method: 'PATCH',
+    headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ birth_date: date })
+  })
+  .then(function(r){ return r.json(); })
+  .then(function(d){
+    if (d.success) {
+      showToast('🎂 Birthday saved to database!');
+      closeEditModal();
+      load();
+    } else {
+      showToast(d.message || 'Failed to save', 'error');
+    }
+  })
+  .catch(function(err){
+    console.error(err);
+    showToast('Server error — check console', 'error');
+  });
+}
+
+function showToast(msg, type) {
+  var t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast ' + (type||'success') + ' show';
+  setTimeout(function(){ t.classList.remove('show'); }, 3000);
+}
+
+load();
+</script>
+</body>
+</html>

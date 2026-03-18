@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Digital Zoo — Animal Origin World Map</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Crimson+Pro:wght@300;400;600&display=swap" rel="stylesheet">
+<!-- Leaflet CSS -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<!-- Leaflet JS -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<style>
+  :root{--bg:#0a1a0e;--sidebar:#0d2414;--card:#0f2818;--card2:#122e1c;--gold:#c9a84c;--gold-light:#e8c86e;--cream:#f5ead5;--white:#faf7f0;--green:#2d6e3e;--muted:#8a9e8e;--danger:#c0392b;--border:rgba(201,168,76,0.15);}
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{font-family:'Crimson Pro',serif;background:var(--bg);color:var(--white);display:flex;min-height:100vh;}
+
+  /* Sidebar */
+  .sidebar{width:260px;background:var(--sidebar);border-right:1px solid var(--border);display:flex;flex-direction:column;position:fixed;top:0;left:0;height:100vh;z-index:100;}
+  .sidebar-logo{padding:24px 20px;border-bottom:1px solid var(--border);}
+  .sidebar-logo h2{font-family:'Playfair Display',serif;background:linear-gradient(135deg,#c9a84c,#e8c86e);-webkit-background-clip:text;-webkit-text-fill-color:transparent;font-size:1.3rem;}
+  .sidebar-logo p{color:var(--muted);font-size:0.75rem;letter-spacing:2px;text-transform:uppercase;margin-top:2px;}
+  .nav{flex:1;padding:16px 0;overflow-y:auto;}
+  .nav-section{padding:8px 20px;color:var(--muted);font-size:0.7rem;letter-spacing:3px;text-transform:uppercase;margin-top:8px;}
+  .nav a{display:flex;align-items:center;gap:12px;padding:12px 20px;color:var(--muted);text-decoration:none;transition:all 0.2s;font-size:0.95rem;border-left:3px solid transparent;}
+  .nav a:hover,.nav a.active{color:var(--white);background:rgba(201,168,76,0.08);border-left-color:var(--gold);}
+  .nav a.active{color:var(--gold-light);}
+  .nav a .icon{width:20px;text-align:center;font-size:1.1rem;}
+  .sidebar-user{padding:16px 20px;border-top:1px solid var(--border);}
+  .user-info{display:flex;align-items:center;gap:10px;}
+  .user-avatar{width:36px;height:36px;background:linear-gradient(135deg,var(--gold),var(--green));border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:bold;color:var(--bg);}
+  .user-name{font-size:0.9rem;color:var(--cream);}
+  .user-role{font-size:0.75rem;color:var(--muted);text-transform:uppercase;}
+
+  /* Main */
+  .main{margin-left:260px;flex:1;padding:24px;display:flex;flex-direction:column;min-height:100vh;}
+  .topbar{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px;flex-wrap:wrap;gap:12px;}
+  .topbar h1{font-family:'Playfair Display',serif;font-size:1.8rem;color:var(--cream);}
+
+  /* Stats row */
+  .stats-row{display:flex;gap:12px;margin-bottom:16px;flex-wrap:wrap;}
+  .stat-pill{background:var(--card);border:1px solid var(--border);border-radius:20px;padding:8px 18px;display:flex;align-items:center;gap:8px;font-size:0.85rem;}
+  .stat-pill .val{font-family:'Playfair Display',serif;font-size:1.1rem;color:var(--gold-light);}
+  .stat-pill .lbl{color:var(--muted);}
+
+  /* Layout */
+  .layout{display:grid;grid-template-columns:1fr 300px;gap:16px;flex:1;}
+
+  /* Map */
+  .map-panel{background:var(--card);border:1px solid var(--border);border-radius:16px;overflow:hidden;position:relative;}
+  #map{width:100%;height:560px;}
+
+  /* Leaflet dark theme overrides */
+  .leaflet-tile-pane{filter:brightness(0.85) saturate(0.7) hue-rotate(10deg);}
+  .leaflet-container{background:#0a1a0e !important;}
+  .leaflet-control-zoom a{background:#0d2414 !important;color:var(--gold) !important;border-color:var(--border) !important;}
+  .leaflet-control-zoom a:hover{background:#1a3d22 !important;}
+  .leaflet-control-attribution{background:rgba(10,26,14,0.8) !important;color:var(--muted) !important;font-size:0.65rem !important;}
+  .leaflet-control-attribution a{color:var(--gold) !important;}
+  .leaflet-popup-content-wrapper{background:#0d2414 !important;border:1px solid var(--border) !important;border-radius:12px !important;color:var(--white) !important;box-shadow:0 8px 24px rgba(0,0,0,0.5) !important;}
+  .leaflet-popup-tip{background:#0d2414 !important;}
+  .leaflet-popup-close-button{color:var(--muted) !important;}
+  .leaflet-popup-close-button:hover{color:var(--gold) !important;}
+
+  /* Popup content */
+  .popup-wrap{min-width:200px;}
+  .popup-country{font-family:'Playfair Display',serif;font-size:1.1rem;color:var(--gold-light);margin-bottom:8px;display:flex;align-items:center;gap:8px;}
+  .popup-animals{display:flex;flex-direction:column;gap:6px;max-height:200px;overflow-y:auto;}
+  .popup-animal{display:flex;align-items:center;gap:8px;padding:6px 8px;background:rgba(255,255,255,0.04);border-radius:8px;cursor:pointer;text-decoration:none;transition:background 0.2s;}
+  .popup-animal:hover{background:rgba(201,168,76,0.12);}
+  .popup-animal .pa-emoji{font-size:1.2rem;}
+  .popup-animal .pa-info .pa-name{color:var(--cream);font-size:0.85rem;font-weight:600;}
+  .popup-animal .pa-info .pa-species{color:var(--muted);font-size:0.72rem;font-style:italic;}
+  .popup-animal .pa-badge{display:inline-block;padding:2px 7px;border-radius:8px;font-size:0.65rem;text-transform:uppercase;margin-left:auto;}
+  .badge-healthy{background:rgba(45,110,62,0.3);color:#7eff90;}
+  .badge-sick{background:rgba(192,57,43,0.3);color:#ff7070;}
+  .badge-recovering{background:rgba(230,126,34,0.3);color:#ffb347;}
+  .badge-critical{background:rgba(192,57,43,0.6);color:#fff;}
+
+  /* Custom marker */
+  .custom-marker{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.1rem;border:2px solid;box-shadow:0 2px 8px rgba(0,0,0,0.5);cursor:pointer;transition:transform 0.2s;background:rgba(13,36,20,0.9);}
+  .custom-marker:hover{transform:scale(1.2);}
+  .marker-count{position:absolute;top:-4px;right:-4px;background:var(--gold);color:#0a1a0e;width:16px;height:16px;border-radius:50%;font-size:0.6rem;font-weight:bold;display:flex;align-items:center;justify-content:center;}
+
+  /* Right panel */
+  .right-panel{display:flex;flex-direction:column;gap:14px;}
+  .panel{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:16px;}
+  .panel h3{font-family:'Playfair Display',serif;color:var(--cream);margin-bottom:12px;font-size:1rem;}
+
+  /* Country list */
+  .country-item{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:10px;cursor:pointer;transition:all 0.2s;border:1px solid transparent;margin-bottom:6px;}
+  .country-item:hover{background:rgba(201,168,76,0.06);border-color:rgba(201,168,76,0.2);}
+  .country-item.active{background:rgba(201,168,76,0.1);border-color:rgba(201,168,76,0.4);}
+  .country-flag{font-size:1.5rem;flex-shrink:0;}
+  .country-name{color:var(--cream);font-size:0.88rem;font-weight:600;}
+  .country-count{color:var(--gold);font-size:0.75rem;}
+  .country-animals{display:flex;gap:3px;flex-wrap:wrap;margin-top:2px;}
+  .c-emoji{font-size:0.85rem;}
+  .count-badge{margin-left:auto;background:rgba(201,168,76,0.2);color:var(--gold-light);padding:2px 8px;border-radius:10px;font-size:0.72rem;font-family:'Playfair Display',serif;flex-shrink:0;}
+
+  /* No origin note */
+  .no-origin{background:rgba(230,126,34,0.1);border:1px solid rgba(230,126,34,0.3);border-radius:10px;padding:10px 14px;color:#ffb347;font-size:0.8rem;margin-top:8px;}
+
+  /* Search */
+  .map-search{width:100%;background:rgba(10,26,14,0.8);border:1px solid var(--border);border-radius:10px;padding:9px 14px;color:var(--white);font-family:'Crimson Pro',serif;font-size:0.9rem;outline:none;margin-bottom:10px;transition:border-color 0.2s;}
+  .map-search:focus{border-color:var(--gold);}
+  .map-search::placeholder{color:var(--muted);}
+
+  .empty{color:var(--muted);text-align:center;padding:20px;font-size:0.85rem;}
+</style>
+</head>
+<body>
+<aside class="sidebar">
+  <div class="sidebar-logo"><h2>🦁 DIGITAL ZOO</h2><p>Admin System</p></div>
+  <nav class="nav">
+    <div class="nav-section">Main</div>
+    <a href="/dashboard"><span class="icon">📊</span> Dashboard</a>
+    <a href="/animals"><span class="icon">🐾</span> Animals</a>
+    <a href="/adoptions"><span class="icon">🤝</span> Adoptions</a>
+    <a href="/medications"><span class="icon">💊</span> Medical Records</a>
+    <div class="nav-section">Unique Features</div>
+    <a href="/ai-health"><span class="icon">🤖</span> AI Health Predictor</a>
+    <a href="/zoo-map"><span class="icon">🗺️</span> Zoo Map</a>
+    <a href="/leaderboard"><span class="icon">🏆</span> Leaderboard</a>
+    <a href="/simulation"><span class="icon">🎮</span> Zoo Simulation</a>
+    <a href="/qr-codes"><span class="icon">📱</span> QR Codes</a>
+    <a href="/world-map" class="active"><span class="icon">🌍</span> Origin Map</a>
+    <a href="/birthdays"><span class="icon">🎂</span> Birthdays</a>
+    <a href="/activity-monitor"><span class="icon">⚡</span> Activity Monitor</a>
+    <div class="nav-section">Management</div>
+    <a href="/reports"><span class="icon">📈</span> Reports</a>
+  </nav>
+  <div class="sidebar-user">
+    <div class="user-info">
+      <div class="user-avatar" id="userAvatar">A</div>
+      <div><div class="user-name" id="userName">Loading...</div><div class="user-role" id="userRole">---</div></div>
+    </div>
+  </div>
+</aside>
+
+<main class="main">
+  <div class="topbar">
+    <div>
+      <h1>🌍 Animal Origin World Map</h1>
+      <p style="color:var(--muted);font-size:0.88rem;margin-top:3px">Real interactive map — click any pin to see which animals came from there</p>
+    </div>
+  </div>
+
+  <!-- Missing coordinates warning -->
+  <div id="missingWarn" style="display:none;background:rgba(230,126,34,0.1);border:1px solid rgba(230,126,34,0.35);border-radius:12px;padding:12px 18px;margin-bottom:14px;color:#ffcc80;font-size:0.85rem;line-height:1.6;"></div>
+
+  <div class="stats-row">
+    <div class="stat-pill"><span class="val" id="statAnimals">—</span><span class="lbl">Animals mapped</span></div>
+    <div class="stat-pill"><span class="val" id="statCountries">—</span><span class="lbl">Countries of origin</span></div>
+    <div class="stat-pill"><span class="val" id="statUnmapped">—</span><span class="lbl">No origin set</span></div>
+  </div>
+
+  <div class="layout">
+    <!-- MAP -->
+    <div class="map-panel">
+      <div id="map"></div>
+    </div>
+
+    <!-- RIGHT PANEL -->
+    <div class="right-panel">
+      <div class="panel" style="flex:1;overflow:hidden;">
+        <h3>📍 Countries of Origin</h3>
+        <input type="text" class="map-search" id="countrySearch" placeholder="🔍 Search country..." oninput="filterCountries()">
+        <div id="countryList" style="max-height:420px;overflow-y:auto;"></div>
+      </div>
+      <div class="panel">
+        <h3>ℹ️ How to use</h3>
+        <div style="color:var(--muted);font-size:0.8rem;line-height:1.7;">
+          📌 Click a <b style="color:var(--gold)">pin</b> on the map to see animals<br>
+          🔍 Click a <b style="color:var(--gold)">country</b> in the list to zoom in<br>
+          🖱️ Scroll to <b style="color:var(--gold)">zoom</b>, drag to pan<br>
+          🐾 Click animal name to <b style="color:var(--gold)">view profile</b>
+        </div>
+      </div>
+      <div class="panel" style="margin-top:12px;">
+        <h3>➕ Add missing country</h3>
+        <div style="color:var(--muted);font-size:0.78rem;line-height:1.8;">
+          Open <code style="background:rgba(0,0,0,0.3);padding:1px 6px;border-radius:4px;color:var(--gold-light)">views/world-map.html</code><br>
+          Find <code style="background:rgba(0,0,0,0.3);padding:1px 6px;border-radius:4px;color:var(--gold-light)">var COORDS</code> and add:<br>
+          <code style="background:rgba(0,0,0,0.4);padding:6px 8px;border-radius:6px;display:block;color:#7eff90;font-size:0.72rem;margin-top:6px">'Country Name':[lat, lng]</code>
+          <a href="https://www.latlong.net" target="_blank" style="color:var(--gold);font-size:0.75rem;display:block;margin-top:8px;">🔍 Find lat/lng →</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<script>
+var token = localStorage.getItem('token');
+var user  = JSON.parse(localStorage.getItem('user') || '{}');
+if (!token) window.location.href = '/login';
+document.getElementById('userName').textContent  = user.name || 'Staff';
+document.getElementById('userRole').textContent  = user.role || 'staff';
+document.getElementById('userAvatar').textContent = (user.name || 'A')[0].toUpperCase();
+
+var EMOJI = { mammal:'🦁', bird:'🦜', reptile:'🦎', fish:'🐟', amphibian:'🐸', invertebrate:'🦋' };
+var FLAGS = {
+  /* Africa */
+  'Kenya':'🇰🇪','Tanzania':'🇹🇿','Uganda':'🇺🇬','Ethiopia':'🇪🇹','Rwanda':'🇷🇼',
+  'Burundi':'🇧🇮','South Africa':'🇿🇦','Botswana':'🇧🇼','Namibia':'🇳🇦',
+  'Zimbabwe':'🇿🇼','Mozambique':'🇲🇿','Malawi':'🇲🇼','Zambia':'🇿🇲',
+  'Angola':'🇦🇴','Congo':'🇨🇬','DRC':'🇨🇩','Democratic Republic of Congo':'🇨🇩',
+  'Cameroon':'🇨🇲','Nigeria':'🇳🇬','Ghana':'🇬🇭','Ivory Coast':'🇨🇮',
+  "Cote d'Ivoire":'🇨🇮','Senegal':'🇸🇳','Mali':'🇲🇱','Niger':'🇳🇪',
+  'Chad':'🇹🇩','Sudan':'🇸🇩','South Sudan':'🇸🇸','Somalia':'🇸🇴',
+  'Eritrea':'🇪🇷','Djibouti':'🇩🇯','Egypt':'🇪🇬','Libya':'🇱🇾',
+  'Tunisia':'🇹🇳','Algeria':'🇩🇿','Morocco':'🇲🇦','Madagascar':'🇲🇬',
+  'Mauritius':'🇲🇺','Seychelles':'🇸🇨','Comoros':'🇰🇲','Gabon':'🇬🇦',
+  'Equatorial Guinea':'🇬🇶','Central African Republic':'🇨🇫','Benin':'🇧🇯',
+  'Burkina Faso':'🇧🇫','Guinea':'🇬🇳','Sierra Leone':'🇸🇱','Liberia':'🇱🇷',
+  'Togo':'🇹🇬','Gambia':'🇬🇲','Mauritania':'🇲🇷','Lesotho':'🇱🇸',
+  'Eswatini':'🇸🇿','Swaziland':'🇸🇿','Cape Verde':'🇨🇻','Guinea-Bissau':'🇬🇼',
+  /* Asia */
+  'India':'🇮🇳','China':'🇨🇳','Japan':'🇯🇵','South Korea':'🇰🇷','North Korea':'🇰🇵',
+  'Taiwan':'🇹🇼','Hong Kong':'🇭🇰','Thailand':'🇹🇭','Indonesia':'🇮🇩',
+  'Malaysia':'🇲🇾','Philippines':'🇵🇭','Vietnam':'🇻🇳','Myanmar':'🇲🇲',
+  'Cambodia':'🇰🇭','Laos':'🇱🇦','Singapore':'🇸🇬','Brunei':'🇧🇳',
+  'Timor-Leste':'🇹🇱','East Timor':'🇹🇱','Pakistan':'🇵🇰','Bangladesh':'🇧🇩',
+  'Nepal':'🇳🇵','Sri Lanka':'🇱🇰','Bhutan':'🇧🇹','Maldives':'🇲🇻',
+  'Afghanistan':'🇦🇫','Iran':'🇮🇷','Iraq':'🇮🇶','Saudi Arabia':'🇸🇦',
+  'Yemen':'🇾🇪','Oman':'🇴🇲','UAE':'🇦🇪','United Arab Emirates':'🇦🇪',
+  'Qatar':'🇶🇦','Kuwait':'🇰🇼','Bahrain':'🇧🇭','Jordan':'🇯🇴',
+  'Syria':'🇸🇾','Lebanon':'🇱🇧','Israel':'🇮🇱','Palestine':'🇵🇸',
+  'Turkey':'🇹🇷','Azerbaijan':'🇦🇿','Armenia':'🇦🇲','Georgia':'🇬🇪',
+  'Kazakhstan':'🇰🇿','Uzbekistan':'🇺🇿','Turkmenistan':'🇹🇲',
+  'Kyrgyzstan':'🇰🇬','Tajikistan':'🇹🇯','Mongolia':'🇲🇳','Russia':'🇷🇺',
+  /* Europe */
+  'UK':'🇬🇧','England':'🏴󠁧󠁢󠁥󠁮󠁧󠁿','Scotland':'🏴󠁧󠁢󠁳󠁣󠁴󠁿','Wales':'🏴󠁧󠁢󠁷󠁬󠁳󠁿',
+  'France':'🇫🇷','Germany':'🇩🇪','Italy':'🇮🇹','Spain':'🇪🇸','Portugal':'🇵🇹',
+  'Netherlands':'🇳🇱','Belgium':'🇧🇪','Switzerland':'🇨🇭','Austria':'🇦🇹',
+  'Poland':'🇵🇱','Czech Republic':'🇨🇿','Slovakia':'🇸🇰','Hungary':'🇭🇺',
+  'Romania':'🇷🇴','Bulgaria':'🇧🇬','Greece':'🇬🇷','Albania':'🇦🇱',
+  'Serbia':'🇷🇸','Croatia':'🇭🇷','Bosnia':'🇧🇦','Slovenia':'🇸🇮',
+  'Montenegro':'🇲🇪','North Macedonia':'🇲🇰','Sweden':'🇸🇪','Norway':'🇳🇴',
+  'Denmark':'🇩🇰','Finland':'🇫🇮','Iceland':'🇮🇸','Ireland':'🇮🇪',
+  'Estonia':'🇪🇪','Latvia':'🇱🇻','Lithuania':'🇱🇹','Belarus':'🇧🇾',
+  'Ukraine':'🇺🇦','Moldova':'🇲🇩','Luxembourg':'🇱🇺','Malta':'🇲🇹',
+  'Cyprus':'🇨🇾','Andorra':'🇦🇩','Monaco':'🇲🇨','San Marino':'🇸🇲',
+  /* Americas */
+  'USA':'🇺🇸','United States':'🇺🇸','Canada':'🇨🇦','Mexico':'🇲🇽',
+  'Brazil':'🇧🇷','Colombia':'🇨🇴','Peru':'🇵🇪','Ecuador':'🇪🇨',
+  'Venezuela':'🇻🇪','Bolivia':'🇧🇴','Argentina':'🇦🇷','Chile':'🇨🇱',
+  'Paraguay':'🇵🇾','Uruguay':'🇺🇾','Guyana':'🇬🇾','Suriname':'🇸🇷',
+  'Guatemala':'🇬🇹','Belize':'🇧🇿','Honduras':'🇭🇳','El Salvador':'🇸🇻',
+  'Nicaragua':'🇳🇮','Costa Rica':'🇨🇷','Panama':'🇵🇦','Cuba':'🇨🇺',
+  'Jamaica':'🇯🇲','Haiti':'🇭🇹','Dominican Republic':'🇩🇴',
+  'Trinidad and Tobago':'🇹🇹','Barbados':'🇧🇧',
+  /* Oceania */
+  'Australia':'🇦🇺','New Zealand':'🇳🇿','Papua New Guinea':'🇵🇬',
+  'Fiji':'🇫🇯','Solomon Islands':'🇸🇧','Vanuatu':'🇻🇺','Samoa':'🇼🇸',
+  'Tonga':'🇹🇴','Palau':'🇵🇼',
+  /* Islands/regions */
+  'Borneo':'🌏','Sumatra':'🌏','Java':'🌏','Galapagos Islands':'🌎',
+  'Canary Islands':'🇪🇸','Madagascar':'🇲🇬'
+};
+
+// Country → [lat, lng]
+var COORDS = {
+  /* ── AFRICA ── */
+  'Kenya':[-0.02,37.9],'Tanzania':[-6.37,34.89],'Uganda':[1.37,32.29],
+  'Ethiopia':[9.14,40.49],'Rwanda':[-1.94,29.87],'Burundi':[-3.37,29.92],
+  'South Africa':[-30.56,22.94],'Botswana':[-22.33,24.68],'Namibia':[-22.96,18.49],
+  'Zimbabwe':[-20.0,30.0],'Mozambique':[-18.67,35.53],'Malawi':[-13.25,34.3],
+  'Zambia':[-13.13,27.85],'Angola':[-11.20,17.87],'Congo':[-4.04,21.76],
+  'DRC':[-4.04,21.76],'Democratic Republic of Congo':[-4.04,21.76],
+  'Cameroon':[3.85,11.5],'Nigeria':[9.08,8.68],'Ghana':[7.95,-1.02],
+  'Ivory Coast':[7.54,-5.55],"Cote d'Ivoire":[7.54,-5.55],
+  'Senegal':[14.50,-14.45],'Mali':[17.57,-3.99],'Niger':[17.61,8.08],
+  'Chad':[15.45,18.73],'Sudan':[12.86,30.22],'South Sudan':[6.88,31.57],
+  'Somalia':[5.15,46.20],'Eritrea':[15.18,39.78],'Djibouti':[11.83,42.59],
+  'Egypt':[26.82,30.8],'Libya':[26.33,17.23],'Tunisia':[33.89,9.54],
+  'Algeria':[28.03,1.66],'Morocco':[31.79,-7.09],
+  'Madagascar':[-18.77,46.87],'Mauritius':[-20.35,57.55],
+  'Seychelles':[-4.68,55.49],'Comoros':[-11.64,43.33],
+  'Gabon':[-0.80,11.61],'Equatorial Guinea':[1.65,10.27],
+  'Central African Republic':[6.61,20.94],'Benin':[9.31,2.32],
+  'Burkina Faso':[12.36,-1.56],'Guinea':[11.00,-10.90],
+  'Sierra Leone':[8.46,-11.78],'Liberia':[6.43,-9.43],
+  'Togo':[8.62,0.82],'Gambia':[13.44,-15.31],
+  'Mauritania':[20.25,-10.94],'Lesotho':[-29.61,28.23],
+  'Eswatini':[-26.52,31.47],'Swaziland':[-26.52,31.47],
+  'Cape Verde':[16.54,-23.04],'Guinea-Bissau':[11.80,-15.18],
+
+  /* ── ASIA ── */
+  'India':[20.59,78.96],'China':[35.86,104.19],'Japan':[36.20,138.25],
+  'South Korea':[35.91,127.77],'North Korea':[40.34,127.51],
+  'Taiwan':[23.70,120.96],'Hong Kong':[22.35,114.14],
+  'Thailand':[15.87,100.99],'Indonesia':[-0.79,113.92],'Malaysia':[4.21,101.97],
+  'Philippines':[12.88,121.77],'Vietnam':[14.06,108.28],'Myanmar':[21.91,95.96],
+  'Cambodia':[12.57,104.99],'Laos':[17.96,102.60],'Singapore':[1.35,103.82],
+  'Brunei':[4.54,114.73],'Timor-Leste':[-8.87,125.73],'East Timor':[-8.87,125.73],
+  'Pakistan':[30.38,69.35],'Bangladesh':[23.68,90.36],'Nepal':[28.39,84.12],
+  'Sri Lanka':[7.87,80.77],'Bhutan':[27.51,90.43],'Maldives':[3.20,73.22],
+  'Afghanistan':[33.93,67.71],'Iran':[32.43,53.69],'Iraq':[33.22,43.68],
+  'Saudi Arabia':[23.89,45.08],'Yemen':[15.55,48.52],'Oman':[21.51,55.92],
+  'UAE':[23.42,53.85],'United Arab Emirates':[23.42,53.85],
+  'Qatar':[25.35,51.18],'Kuwait':[29.31,47.48],'Bahrain':[25.93,50.64],
+  'Jordan':[30.59,36.24],'Syria':[34.80,38.99],'Lebanon':[33.89,35.50],
+  'Israel':[31.05,34.85],'Palestine':[31.95,35.23],
+  'Turkey':[38.96,35.24],'Azerbaijan':[40.14,47.58],'Armenia':[40.07,45.04],
+  'Georgia':[42.32,43.36],'Kazakhstan':[48.02,66.92],'Uzbekistan':[41.38,64.59],
+  'Turkmenistan':[38.97,59.56],'Kyrgyzstan':[41.21,74.77],'Tajikistan':[38.86,71.28],
+  'Mongolia':[46.86,103.85],'Russia':[61.52,105.32],
+
+  /* ── EUROPE ── */
+  'UK':[55.38,-3.44],'England':[52.36,-1.17],'Scotland':[56.49,-4.20],
+  'Wales':[52.13,-3.78],'Northern Ireland':[54.78,-6.49],
+  'France':[46.23,2.21],'Germany':[51.17,10.45],'Italy':[41.87,12.57],
+  'Spain':[40.46,-3.75],'Portugal':[39.40,-8.22],'Netherlands':[52.13,5.29],
+  'Belgium':[50.50,4.47],'Switzerland':[46.82,8.23],'Austria':[47.52,14.55],
+  'Poland':[51.92,19.14],'Czech Republic':[49.82,15.47],'Slovakia':[48.67,19.70],
+  'Hungary':[47.16,19.50],'Romania':[45.94,24.97],'Bulgaria':[42.73,25.49],
+  'Greece':[39.07,21.82],'Albania':[41.15,20.17],'Serbia':[44.02,21.01],
+  'Croatia':[45.10,15.20],'Bosnia':[44.17,17.68],'Slovenia':[46.15,14.99],
+  'Montenegro':[42.71,19.37],'North Macedonia':[41.61,21.74],
+  'Sweden':[60.13,18.64],'Norway':[60.47,8.47],'Denmark':[56.26,9.50],
+  'Finland':[61.92,25.75],'Iceland':[64.96,-19.02],'Ireland':[53.41,-8.24],
+  'Estonia':[58.60,25.01],'Latvia':[56.88,24.60],'Lithuania':[55.17,23.88],
+  'Belarus':[53.71,27.95],'Ukraine':[48.38,31.17],'Moldova':[47.41,28.37],
+  'Luxembourg':[49.82,6.13],'Liechtenstein':[47.17,9.56],'Monaco':[43.73,7.40],
+  'San Marino':[43.94,12.46],'Vatican':[41.90,12.45],'Malta':[35.94,14.38],
+  'Cyprus':[35.13,33.43],'Andorra':[42.55,1.60],
+
+  /* ── AMERICAS ── */
+  'USA':[37.09,-95.71],'United States':[37.09,-95.71],
+  'Canada':[56.13,-106.35],'Mexico':[23.63,-102.55],
+  'Brazil':[-14.24,-51.93],'Colombia':[4.57,-74.3],'Peru':[-9.19,-75.02],
+  'Ecuador':[-1.83,-78.18],'Venezuela':[6.42,-66.59],'Bolivia':[-16.29,-63.59],
+  'Argentina':[-38.42,-63.62],'Chile':[-35.68,-71.54],'Paraguay':[-23.44,-58.44],
+  'Uruguay':[-32.52,-55.77],'Guyana':[4.86,-58.93],'Suriname':[3.92,-56.03],
+  'French Guiana':[3.93,-53.13],'Trinidad and Tobago':[10.69,-61.22],
+  'Guatemala':[15.78,-90.23],'Belize':[17.19,-88.50],'Honduras':[15.20,-86.24],
+  'El Salvador':[13.79,-88.90],'Nicaragua':[12.87,-85.21],'Costa Rica':[9.75,-83.75],
+  'Panama':[8.54,-80.78],'Cuba':[21.52,-77.78],'Jamaica':[18.11,-77.30],
+  'Haiti':[18.97,-72.29],'Dominican Republic':[18.74,-70.16],
+  'Puerto Rico':[18.22,-66.59],'Bahamas':[25.03,-77.40],
+  'Barbados':[13.19,-59.54],'Saint Lucia':[13.91,-60.98],
+
+  /* ── OCEANIA ── */
+  'Australia':[-25.27,133.78],'New Zealand':[-40.90,174.88],
+  'Papua New Guinea':[-6.31,143.96],'Fiji':[-17.71,178.07],
+  'Solomon Islands':[-9.65,160.16],'Vanuatu':[-15.38,166.96],
+  'Samoa':[-13.76,-172.10],'Tonga':[-21.18,-175.20],
+  'Kiribati':[1.87,157.36],'Micronesia':[6.89,158.24],
+  'Palau':[7.52,134.58],'Marshall Islands':[7.13,171.18],
+
+  /* ── CENTRAL ASIA (extra) ── */
+  'Borneo':[0.96,114.55],'Sumatra':[-0.59,101.34],
+  'Java':[-7.62,110.22],'Sulawesi':[-1.43,121.45],
+
+  /* ── POLAR / ISLAND REGIONS ── */
+  'Galapagos Islands':[-0.95,-90.96],
+  'Canary Islands':[28.29,-15.62],
+  'Azores':[37.74,-25.67]
+};
+
+// Initialize Leaflet map
+var map = L.map('map', {
+  center: [20, 15],
+  zoom: 2,
+  minZoom: 1,
+  maxZoom: 10,
+  zoomControl: true
+});
+
+// Dark tile layer (CartoDB Dark Matter)
+L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+  attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/">CARTO</a>',
+  subdomains: 'abcd',
+  maxZoom: 19
+}).addTo(map);
+
+var markersLayer = L.layerGroup().addTo(map);
+var allCountries = {};
+var activeCountry = null;
+
+// Load animals from DB
+fetch('/api/animals?limit=100', { headers: { 'Authorization': 'Bearer ' + token } })
+  .then(function(r){ return r.json(); })
+  .then(function(d){
+    var animals = d.data || [];
+    var mapped = 0, unmapped = 0;
+
+    // Group by country
+    var missingCoords = [];
+    animals.forEach(function(a){
+      var country = (a.origin_country || '').trim();
+      if (!country) { unmapped++; return; }
+      if (!allCountries[country]) allCountries[country] = [];
+      allCountries[country].push(a);
+      mapped++;
+      if (!COORDS[country] && missingCoords.indexOf(country) === -1) {
+        missingCoords.push(country);
+      }
+    });
+
+    // Stats
+    document.getElementById('statAnimals').textContent   = mapped;
+    document.getElementById('statCountries').textContent = Object.keys(allCountries).length;
+    document.getElementById('statUnmapped').textContent  = unmapped;
+
+    // Warn about missing coordinates
+    if (missingCoords.length) {
+      var warn = document.getElementById('missingWarn');
+      if (warn) {
+        warn.style.display = 'block';
+        warn.innerHTML =
+          '<strong>⚠️ No map coordinates for: </strong>' +
+          missingCoords.map(function(c){
+            return '<code style="background:rgba(0,0,0,0.3);padding:1px 7px;border-radius:4px;margin:0 3px">' + c + '</code>';
+          }).join('') +
+          '<br><span style="font-size:0.78rem;opacity:0.75;margin-top:4px;display:block">These countries show in the list but not on the map. Scroll down to see how to add coordinates.</span>';
+      }
+      console.warn('Missing map coordinates for:', missingCoords);
+    }
+
+    // Place markers
+    Object.keys(allCountries).forEach(function(country){
+      placeMarker(country, allCountries[country]);
+    });
+
+    // Render country list
+    renderCountryList(allCountries);
+
+    // Fit map to markers if any
+    if (Object.keys(allCountries).length > 0) {
+      var latlngs = Object.keys(allCountries)
+        .filter(function(c){ return COORDS[c]; })
+        .map(function(c){ return COORDS[c]; });
+      if (latlngs.length) {
+        map.fitBounds(latlngs, { padding: [40, 40], maxZoom: 5 });
+      }
+    }
+  });
+
+function placeMarker(country, animals) {
+  var coords = COORDS[country];
+  if (!coords) {
+    console.warn('No coordinates for:', country);
+    return;
+  }
+
+  var count     = animals.length;
+  var emoji     = EMOJI[animals[0].category] || '🐾';
+  var borderColor = count >= 3 ? '#c9a84c' : count === 2 ? '#74b9e7' : '#2d6e3e';
+
+  // Custom marker HTML
+  var iconHtml =
+    '<div class="custom-marker" style="border-color:' + borderColor + '">' +
+      emoji +
+      '<div class="marker-count">' + count + '</div>' +
+    '</div>';
+
+  var icon = L.divIcon({
+    html: iconHtml,
+    className: '',
+    iconSize: [36, 36],
+    iconAnchor: [18, 18],
+    popupAnchor: [0, -20]
+  });
+
+  var marker = L.marker(coords, { icon: icon });
+
+  // Build popup
+  var flag    = FLAGS[country] || '🌍';
+  var popupHtml =
+    '<div class="popup-wrap">' +
+      '<div class="popup-country">' + flag + ' ' + country +
+        ' <span style="color:var(--muted);font-size:0.75rem">(' + count + ' animal' + (count!==1?'s':'') + ')</span>' +
+      '</div>' +
+      '<div class="popup-animals">' +
+        animals.map(function(a){
+          return '<a class="popup-animal" href="/animal/' + a.id + '">' +
+            '<span class="pa-emoji">' + (EMOJI[a.category]||'🐾') + '</span>' +
+            '<div class="pa-info">' +
+              '<div class="pa-name">' + a.name + '</div>' +
+              '<div class="pa-species">' + a.species + '</div>' +
+            '</div>' +
+            '<span class="pa-badge badge-' + a.health_status + '">' + a.health_status + '</span>' +
+          '</a>';
+        }).join('') +
+      '</div>' +
+    '</div>';
+
+  marker.bindPopup(popupHtml, { maxWidth: 260, minWidth: 220 });
+  marker.addTo(markersLayer);
+
+  // Pulse animation on hover
+  marker.on('mouseover', function(){ this.openPopup(); });
+}
+
+function renderCountryList(countries) {
+  var sorted = Object.keys(countries).sort(function(a,b){
+    return countries[b].length - countries[a].length;
+  });
+  renderFilteredList(sorted, countries);
+}
+
+function renderFilteredList(sorted, countries) {
+  var list = document.getElementById('countryList');
+  if (!sorted.length) {
+    list.innerHTML = '<div class="empty">No countries found.<br>Add origin_country to animals.</div>';
+    return;
+  }
+  list.innerHTML = sorted.map(function(country){
+    var animals = countries[country];
+    var flag    = FLAGS[country] || '🌍';
+    var emojis  = animals.slice(0,5).map(function(a){ return '<span class="c-emoji" title="'+a.name+'">' + (EMOJI[a.category]||'🐾') + '</span>'; }).join('');
+    return '<div class="country-item" id="ci-' + country.replace(/\s/g,'_') + '" onclick="zoomToCountry(\'' + country.replace(/'/g,"\\'") + '\')">' +
+      '<span class="country-flag">' + flag + '</span>' +
+      '<div style="flex:1;min-width:0;">' +
+        '<div class="country-name">' + country + '</div>' +
+        '<div class="country-animals">' + emojis + (animals.length > 5 ? '<span style="color:var(--muted);font-size:0.72rem">+' + (animals.length-5) + '</span>' : '') + '</div>' +
+      '</div>' +
+      '<span class="count-badge">' + animals.length + '</span>' +
+    '</div>';
+  }).join('');
+}
+
+function zoomToCountry(country) {
+  var coords = COORDS[country];
+
+  // Highlight list item
+  document.querySelectorAll('.country-item').forEach(function(el){ el.classList.remove('active'); });
+  var el = document.getElementById('ci-' + country.replace(/\s/g,'_'));
+  if (el) { el.classList.add('active'); el.scrollIntoView({ behavior:'smooth', block:'nearest' }); }
+
+  if (!coords) {
+    alert('No map coordinates for "' + country + '".\nYou can add them in the COORDS object in the page source.');
+    return;
+  }
+
+  // Fly to country and open popup
+  map.flyTo(coords, 5, { animate: true, duration: 1.2 });
+
+  // Open the marker popup after fly
+  setTimeout(function(){
+    markersLayer.eachLayer(function(layer){
+      var latlng = layer.getLatLng();
+      if (Math.abs(latlng.lat - coords[0]) < 0.1 && Math.abs(latlng.lng - coords[1]) < 0.1) {
+        layer.openPopup();
+      }
+    });
+  }, 1300);
+}
+
+function filterCountries() {
+  var q = document.getElementById('countrySearch').value.toLowerCase();
+  var filtered = Object.keys(allCountries).filter(function(c){
+    return !q || c.toLowerCase().includes(q);
+  }).sort(function(a,b){ return allCountries[b].length - allCountries[a].length; });
+  renderFilteredList(filtered, allCountries);
+}
+
+// Fix map size after layout renders
+setTimeout(function(){ map.invalidateSize(); }, 300);
+</script>
+</body>
+</html>

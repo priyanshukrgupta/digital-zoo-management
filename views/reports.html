@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <link rel="stylesheet" href="/css/jungle.css">
+<link rel="stylesheet" href="/css/animations.css">
+<link rel="stylesheet" href="/css/theme.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Digital Zoo — Reports & Analytics</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Crimson+Pro:wght@300;400;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+  :root{--bg:#0a1a0e;--sidebar:#0d2414;--card:#0f2818;--card2:#122e1c;--gold:#c9a84c;--gold-light:#e8c86e;--cream:#f5ead5;--white:#faf7f0;--green:#2d6e3e;--muted:#8a9e8e;--danger:#c0392b;--border:rgba(201,168,76,0.15);}
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{font-family:'Crimson Pro',serif;background:var(--bg);color:var(--white);display:flex;min-height:100vh;}
+  .sidebar{width:260px;background:var(--sidebar);border-right:1px solid var(--border);display:flex;flex-direction:column;position:fixed;top:0;left:0;height:100vh;z-index:100;}
+  .sidebar-logo{padding:24px 20px;border-bottom:1px solid var(--border);}
+  .sidebar-logo h2{font-family:'Playfair Display',serif;background:linear-gradient(135deg,#c9a84c,#e8c86e);-webkit-background-clip:text;-webkit-text-fill-color:transparent;font-size:1.3rem;}
+  .sidebar-logo p{color:var(--muted);font-size:0.75rem;letter-spacing:2px;text-transform:uppercase;margin-top:2px;}
+  .nav{flex:1;padding:16px 0;}
+  .nav-section{padding:8px 20px;color:var(--muted);font-size:0.7rem;letter-spacing:3px;text-transform:uppercase;margin-top:8px;}
+  .nav a{display:flex;align-items:center;gap:12px;padding:12px 20px;color:var(--muted);text-decoration:none;transition:all 0.2s;font-size:0.95rem;border-left:3px solid transparent;}
+  .nav a:hover,.nav a.active{color:var(--white);background:rgba(201,168,76,0.08);border-left-color:var(--gold);}
+  .nav a.active{color:var(--gold-light);}
+  .nav a .icon{width:20px;text-align:center;font-size:1.1rem;}
+  .sidebar-user{padding:16px 20px;border-top:1px solid var(--border);}
+  .user-info{display:flex;align-items:center;gap:10px;}
+  .user-avatar{width:36px;height:36px;background:linear-gradient(135deg,var(--gold),var(--green));border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:bold;color:var(--bg);}
+  .user-name{font-size:0.9rem;color:var(--cream);}
+  .user-role{font-size:0.75rem;color:var(--muted);text-transform:uppercase;}
+  .main{margin-left:260px;flex:1;padding:28px;min-height:100vh;}
+  .topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:28px;flex-wrap:wrap;gap:16px;}
+  .topbar h1{font-family:'Playfair Display',serif;font-size:1.8rem;color:var(--cream);}
+  .btn-gold{background:linear-gradient(135deg,#c9a84c,#e8c86e);border:none;color:#0a1a0e;padding:12px 24px;border-radius:10px;font-family:'Crimson Pro',serif;font-size:0.95rem;font-weight:600;cursor:pointer;transition:all 0.2s;}
+  .btn-gold:hover{transform:translateY(-2px);}
+  .charts-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:24px;}
+  .charts-grid.full{grid-template-columns:1fr;}
+  .panel{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:24px;}
+  .panel h3{font-family:'Playfair Display',serif;color:var(--cream);margin-bottom:20px;font-size:1.15rem;}
+  canvas{max-width:100%!important;}
+  /* Enclosures */
+  .cage-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px;}
+  .cage-card{background:var(--card2);border:1px solid var(--border);border-radius:14px;padding:18px;transition:all 0.2s;}
+  .cage-card:hover{border-color:rgba(201,168,76,0.3);transform:translateY(-2px);}
+  .cage-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;}
+  .cage-num{font-family:'Playfair Display',serif;color:var(--gold-light);font-size:1rem;}
+  .cage-name{color:var(--cream);font-size:0.9rem;margin-bottom:4px;}
+  .cage-loc{color:var(--muted);font-size:0.8rem;}
+  .cage-zone{display:inline-block;padding:2px 8px;background:rgba(201,168,76,0.15);border:1px solid rgba(201,168,76,0.2);border-radius:6px;color:var(--gold);font-size:0.7rem;text-transform:uppercase;letter-spacing:1px;}
+  .occupancy-bar{margin-top:12px;}
+  .occ-label{display:flex;justify-content:space-between;color:var(--muted);font-size:0.78rem;margin-bottom:5px;}
+  .occ-track{height:6px;background:rgba(255,255,255,0.05);border-radius:3px;overflow:hidden;}
+  .occ-fill{height:100%;border-radius:3px;transition:width 0.8s ease;}
+  .cage-meta{display:flex;gap:16px;margin-top:10px;}
+  .cage-meta span{color:var(--muted);font-size:0.8rem;}
+  /* Endangered list */
+  table{width:100%;border-collapse:collapse;}
+  thead th{padding:12px 16px;text-align:left;color:var(--gold-light);font-size:0.72rem;letter-spacing:2px;text-transform:uppercase;border-bottom:1px solid var(--border);}
+  tbody td{padding:12px 16px;color:var(--cream);font-size:0.9rem;border-bottom:1px solid var(--border);}
+  tbody tr:last-child td{border-bottom:none;}
+  .cons-badge{display:inline-block;padding:2px 8px;border-radius:6px;font-size:0.72rem;font-weight:bold;}
+  .cons-LC{background:rgba(45,110,62,0.3);color:#7eff90;}
+  .cons-VU{background:rgba(230,126,34,0.3);color:#ffb347;}
+  .cons-EN{background:rgba(192,57,43,0.3);color:#ff7070;}
+  .cons-CR{background:rgba(192,57,43,0.6);color:#fff;}
+  .top-card{display:flex;align-items:center;gap:14px;padding:12px;background:rgba(13,36,20,0.5);border-radius:10px;margin-bottom:10px;border:1px solid var(--border);}
+  .rank{font-family:'Playfair Display',serif;font-size:1.5rem;color:var(--gold-light);width:30px;}
+  .top-img{width:44px;height:44px;border-radius:8px;object-fit:cover;}
+  .top-ph{width:44px;height:44px;border-radius:8px;background:var(--card);display:flex;align-items:center;justify-content:center;font-size:1.5rem;}
+  .top-info .name{color:var(--cream);font-size:0.95rem;}
+  .top-info .count{color:var(--gold);font-size:0.82rem;}
+  .empty{text-align:center;padding:30px;color:var(--muted);}
+  /* Add cage modal */
+  .modal-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.7);z-index:999;display:none;align-items:center;justify-content:center;padding:20px;}
+  .modal-overlay.open{display:flex;}
+  .modal{background:#0d2414;border:1px solid var(--border);border-radius:20px;width:100%;max-width:560px;max-height:90vh;overflow-y:auto;}
+  .modal-head{padding:24px 28px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;background:#0d2414;}
+  .modal-head h3{font-family:'Playfair Display',serif;color:var(--cream);font-size:1.2rem;}
+  .modal-close{background:none;border:none;color:var(--muted);font-size:1.5rem;cursor:pointer;}
+  .modal-body{padding:28px;}
+  .form-row{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;}
+  .fg{margin-bottom:16px;}
+  .fg label{display:block;color:var(--gold-light);font-size:0.75rem;letter-spacing:2px;text-transform:uppercase;margin-bottom:7px;}
+  .fg input,.fg select{width:100%;background:rgba(10,26,14,0.7);border:1px solid var(--border);border-radius:10px;padding:12px 16px;color:var(--white);font-family:'Crimson Pro',serif;font-size:0.95rem;outline:none;transition:all 0.2s;}
+  .fg input:focus,.fg select:focus{border-color:var(--gold);}
+  .modal-foot{padding:20px 28px;border-top:1px solid var(--border);display:flex;gap:12px;justify-content:flex-end;}
+  .btn-cancel{background:rgba(255,255,255,0.05);border:1px solid var(--border);color:var(--muted);padding:12px 24px;border-radius:10px;cursor:pointer;font-family:'Crimson Pro',serif;}
+  .btn-save{background:linear-gradient(135deg,#c9a84c,#e8c86e);border:none;color:#0a1a0e;padding:12px 28px;border-radius:10px;font-family:'Crimson Pro',serif;font-weight:600;cursor:pointer;}
+  .toast{position:fixed;bottom:30px;right:30px;background:rgba(45,110,62,0.9);border:1px solid rgba(45,110,62,0.6);color:#fff;padding:14px 22px;border-radius:12px;z-index:9999;transition:all 0.3s;transform:translateY(100px);opacity:0;}
+  .toast.show{transform:translateY(0);opacity:1;}
+  .toast.error{background:rgba(192,57,43,0.9);}
+</style>
+</head>
+<body>
+<aside class="sidebar">
+  <div class="sidebar-logo"><h2>🦁 DIGITAL ZOO</h2><p>Admin System</p></div>
+  <nav class="nav">
+    <div class="nav-section">Main</div>
+    <a href="/dashboard"><span class="icon">📊</span> Dashboard</a>
+    <a href="/animals"><span class="icon">🐾</span> Animals</a>
+    <a href="/adoptions"><span class="icon">🤝</span> Adoptions</a>
+    <a href="/medications"><span class="icon">💊</span> Medical Records</a>
+    <div class="nav-section">Management</div>
+    <a href="/reports" class="active"><span class="icon">📈</span> Reports</a>
+  </nav>
+  <div class="sidebar-user">
+    <div class="user-info">
+      <div class="user-avatar" id="userAvatar">A</div>
+      <div><div class="user-name" id="userName">Loading...</div><div class="user-role" id="userRole">---</div></div>
+    </div>
+  </div>
+</aside>
+
+<main class="main">
+  <div class="topbar">
+    <h1>📈 Reports & Analytics</h1>
+    <button class="btn-gold" onclick="window.print()">🖨️ Print Report</button>
+  </div>
+
+  <!-- Charts -->
+  <div class="charts-grid" style="margin-bottom:24px;">
+    <div class="panel">
+      <h3>📅 Monthly Adoptions (Last 12 Months)</h3>
+      <canvas id="adoptionChart" height="200"></canvas>
+    </div>
+    <div class="panel">
+      <h3>🏆 Top Adopted Animals</h3>
+      <div id="topAdopted"><div class="empty">Loading...</div></div>
+    </div>
+  </div>
+
+  <div class="charts-grid" style="margin-bottom:24px;">
+    <div class="panel">
+      <h3>❤️ Health Status by Category</h3>
+      <canvas id="healthChart" height="220"></canvas>
+    </div>
+    <div class="panel">
+      <h3>⚠️ Endangered Species List</h3>
+      <div style="overflow-x:auto;">
+        <table>
+          <thead><tr><th>Name</th><th>Species</th><th>Status</th><th>Health</th></tr></thead>
+          <tbody id="endangeredTable"><tr><td colspan="4" class="empty">Loading...</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Enclosures -->
+  <div class="panel" style="margin-bottom:24px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+      <h3 style="margin-bottom:0;">🏠 Enclosures / Cages</h3>
+      <button class="btn-gold" onclick="openCageModal()" style="padding:10px 20px;font-size:0.9rem;">+ Add Enclosure</button>
+    </div>
+    <div class="cage-grid" id="cageGrid"><div class="empty">Loading...</div></div>
+  </div>
+</main>
+
+<!-- Add Cage Modal -->
+<div class="modal-overlay" id="cageModal">
+  <div class="modal">
+    <div class="modal-head"><h3>🏠 Add New Enclosure</h3><button class="modal-close" onclick="closeCageModal()">×</button></div>
+    <div class="modal-body">
+      <div class="form-row">
+        <div class="fg"><label>Cage Number *</label><input type="text" id="cNum" placeholder="Z-008"></div>
+        <div class="fg"><label>Name *</label><input type="text" id="cName" placeholder="Lion Pride Enclosure"></div>
+      </div>
+      <div class="form-row">
+        <div class="fg"><label>Location</label><input type="text" id="cLoc" placeholder="East Wing"></div>
+        <div class="fg"><label>Zone</label>
+          <select id="cZone">
+            <option value="safari">Safari</option>
+            <option value="aquatic">Aquatic</option>
+            <option value="aviary">Aviary</option>
+            <option value="reptile">Reptile</option>
+            <option value="nocturnal">Nocturnal</option>
+            <option value="petting">Petting Zoo</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="fg"><label>Capacity</label><input type="number" id="cCap" placeholder="5" min="1"></div>
+        <div class="fg"><label>Size (sq meters)</label><input type="number" id="cSize" placeholder="500" step="0.1"></div>
+      </div>
+      <div class="fg"><label>Habitat Type</label><input type="text" id="cHab" placeholder="Savanna, Jungle, Ocean..."></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn-cancel" onclick="closeCageModal()">Cancel</button>
+      <button class="btn-save" onclick="saveCage()">Create Enclosure</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const token=localStorage.getItem('token');
+const user=JSON.parse(localStorage.getItem('user')||'{}');
+if(!token) window.location.href='/login';
+document.getElementById('userName').textContent=user.name||'Staff';
+document.getElementById('userRole').textContent=user.role||'staff';
+document.getElementById('userAvatar').textContent=(user.name||'A')[0].toUpperCase();
+
+const ZONE_COLORS={safari:'#c9a84c',aquatic:'#2980b9',aviary:'#27ae60',reptile:'#e67e22',nocturnal:'#8e44ad',petting:'#16a085'};
+const MONTHS=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+async function loadReports(){
+  try{
+    const res=await fetch('/api/dashboard/reports',{headers:{'Authorization':'Bearer '+token}});
+    const {data}=await res.json();
+
+    // Monthly adoptions chart
+    if(data.monthlyAdoptions?.length){
+      const labels=data.monthlyAdoptions.map(d=>`${MONTHS[d.month-1]} ${d.year}`);
+      const counts=data.monthlyAdoptions.map(d=>d.count);
+      const revenue=data.monthlyAdoptions.map(d=>d.revenue||0);
+      new Chart(document.getElementById('adoptionChart'),{
+        type:'bar',
+        data:{labels,datasets:[
+          {label:'Adoptions',data:counts,backgroundColor:'rgba(201,168,76,0.7)',borderColor:'#c9a84c',borderWidth:2,borderRadius:6},
+          {label:'Revenue (₹)',data:revenue,type:'line',borderColor:'#2d6e3e',backgroundColor:'rgba(45,110,62,0.1)',tension:0.4,yAxisID:'y1'}
+        ]},
+        options:{responsive:true,plugins:{legend:{labels:{color:'#8a9e8e'}}},scales:{
+          x:{ticks:{color:'#8a9e8e'},grid:{color:'rgba(255,255,255,0.04)'}},
+          y:{ticks:{color:'#8a9e8e'},grid:{color:'rgba(255,255,255,0.04)'}},
+          y1:{position:'right',ticks:{color:'#2d6e3e'},grid:{display:false}}
+        }}
+      });
+    } else {
+      document.getElementById('adoptionChart').parentElement.innerHTML += '<div class="empty">No adoption data yet</div>';
+    }
+
+    // Top adopted
+    const ta=document.getElementById('topAdopted');
+    if(data.topAdopted?.length){
+      ta.innerHTML=data.topAdopted.map((a,i)=>`
+        <div class="top-card">
+          <div class="rank">${['🥇','🥈','🥉','4️⃣','5️⃣'][i]||i+1}</div>
+          ${a.image_url?`<img class="top-img" src="${a.image_url}" onerror="this.style.display='none'">`:`<div class="top-ph">🐾</div>`}
+          <div class="top-info">
+            <div class="name">${a.name}</div>
+            <div class="count">${a.species} · ${a.adoption_count} adoption${a.adoption_count!=1?'s':''}</div>
+          </div>
+        </div>`).join('');
+    } else { ta.innerHTML='<div class="empty">No adoption data yet</div>'; }
+
+    // Health by category chart
+    if(data.healthByCategory?.length){
+      const categories=[...new Set(data.healthByCategory.map(d=>d.category))];
+      const statuses=['healthy','sick','recovering','critical'];
+      const statusColors={'healthy':'rgba(45,110,62,0.8)','sick':'rgba(192,57,43,0.8)','recovering':'rgba(230,126,34,0.8)','critical':'rgba(255,0,0,0.8)'};
+      const datasets=statuses.map(s=>({
+        label:s,
+        data:categories.map(c=>{const found=data.healthByCategory.find(d=>d.category===c&&d.health_status===s);return found?found.count:0;}),
+        backgroundColor:statusColors[s]
+      }));
+      new Chart(document.getElementById('healthChart'),{
+        type:'bar',
+        data:{labels:categories,datasets},
+        options:{responsive:true,plugins:{legend:{labels:{color:'#8a9e8e'}}},scales:{
+          x:{stacked:true,ticks:{color:'#8a9e8e'},grid:{color:'rgba(255,255,255,0.04)'}},
+          y:{stacked:true,ticks:{color:'#8a9e8e'},grid:{color:'rgba(255,255,255,0.04)'}}
+        }}
+      });
+    }
+
+    // Endangered table
+    const et=document.getElementById('endangeredTable');
+    if(data.endangeredList?.length){
+      et.innerHTML=data.endangeredList.map(a=>`<tr>
+        <td>${a.name}</td>
+        <td style="font-style:italic;color:var(--muted)">${a.species}</td>
+        <td><span class="cons-badge cons-${a.conservation_status}">${a.conservation_status}</span></td>
+        <td><span style="color:${a.health_status==='healthy'?'#7eff90':a.health_status==='sick'?'#ff7070':'#ffb347'}">${a.health_status}</span></td>
+      </tr>`).join('');
+    } else { et.innerHTML='<tr><td colspan="4" class="empty">No endangered animals registered</td></tr>'; }
+
+  }catch(e){console.error('Reports error:',e);}
+}
+
+async function loadCages(){
+  try{
+    const res=await fetch('/api/dashboard/cages',{headers:{'Authorization':'Bearer '+token}});
+    const {data}=await res.json();
+    const g=document.getElementById('cageGrid');
+    if(!data?.length){g.innerHTML='<div class="empty">No enclosures added yet</div>';return;}
+    g.innerHTML=data.map(c=>{
+      const pct=c.capacity>0?Math.min(100,Math.round((c.current_occupancy/c.capacity)*100)):0;
+      const color=pct>90?'#c0392b':pct>60?'#e67e22':'#2d6e3e';
+      return `<div class="cage-card">
+        <div class="cage-header">
+          <div>
+            <div class="cage-num">${c.cage_number}</div>
+            <div class="cage-name">${c.name}</div>
+            <div class="cage-loc">📍 ${c.location||'—'}</div>
+          </div>
+          <span class="cage-zone">${c.zone}</span>
+        </div>
+        ${c.habitat_type?`<div style="color:var(--muted);font-size:0.8rem;margin-top:4px">🌿 ${c.habitat_type}</div>`:''}
+        <div class="occupancy-bar">
+          <div class="occ-label"><span>Occupancy</span><span>${c.current_occupancy||0} / ${c.capacity}</span></div>
+          <div class="occ-track"><div class="occ-fill" style="width:${pct}%;background:${color}"></div></div>
+        </div>
+        <div class="cage-meta">
+          ${c.size_sqm?`<span>📐 ${c.size_sqm}m²</span>`:''}
+          <span>🐾 ${c.animal_count||0} animals</span>
+        </div>
+      </div>`;
+    }).join('');
+  }catch(e){console.error(e);}
+}
+
+function openCageModal(){document.getElementById('cageModal').classList.add('open');}
+function closeCageModal(){document.getElementById('cageModal').classList.remove('open');}
+
+async function saveCage(){
+  const body={cage_number:document.getElementById('cNum').value,name:document.getElementById('cName').value,location:document.getElementById('cLoc').value,zone:document.getElementById('cZone').value,capacity:document.getElementById('cCap').value,size_sqm:document.getElementById('cSize').value,habitat_type:document.getElementById('cHab').value};
+  if(!body.cage_number||!body.name){showToast('Cage number and name required','error');return;}
+  try{
+    const res=await fetch('/api/dashboard/cages',{method:'POST',headers:{'Authorization':'Bearer '+token,'Content-Type':'application/json'},body:JSON.stringify(body)});
+    const d=await res.json();
+    if(d.success){showToast('Enclosure created!');closeCageModal();loadCages();}
+    else showToast(d.message||'Failed','error');
+  }catch(e){showToast('Server error','error');}
+}
+
+function showToast(msg,type='success'){const t=document.getElementById('toast');t.textContent=msg;t.className='toast '+type+' show';setTimeout(()=>t.classList.remove('show'),3500);}
+
+loadReports();
+loadCages();
+</script>
+</body>
+</html>

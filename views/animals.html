@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <link rel="stylesheet" href="/css/jungle.css">
+<link rel="stylesheet" href="/css/animations.css">
+<link rel="stylesheet" href="/css/theme.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Digital Zoo — Animals</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Crimson+Pro:wght@300;400;600&display=swap" rel="stylesheet">
+<style>
+  :root{--bg:#0a1a0e;--sidebar:#0d2414;--card:#0f2818;--gold:#c9a84c;--gold-light:#e8c86e;--cream:#f5ead5;--white:#faf7f0;--green:#2d6e3e;--muted:#8a9e8e;--danger:#c0392b;--border:rgba(201,168,76,0.15);}
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{font-family:'Crimson Pro',serif;background:var(--bg);color:var(--white);display:flex;min-height:100vh;}
+  .sidebar{width:260px;background:var(--sidebar);border-right:1px solid var(--border);display:flex;flex-direction:column;position:fixed;top:0;left:0;height:100vh;z-index:100;}
+  .sidebar-logo{padding:24px 20px;border-bottom:1px solid var(--border);}
+  .sidebar-logo h2{font-family:'Playfair Display',serif;background:linear-gradient(135deg,#c9a84c,#e8c86e);-webkit-background-clip:text;-webkit-text-fill-color:transparent;font-size:1.3rem;}
+  .sidebar-logo p{color:var(--muted);font-size:0.75rem;letter-spacing:2px;text-transform:uppercase;margin-top:2px;}
+  .nav{flex:1;padding:16px 0;}
+  .nav-section{padding:8px 20px;color:var(--muted);font-size:0.7rem;letter-spacing:3px;text-transform:uppercase;margin-top:8px;}
+  .nav a{display:flex;align-items:center;gap:12px;padding:12px 20px;color:var(--muted);text-decoration:none;transition:all 0.2s;font-size:0.95rem;border-left:3px solid transparent;}
+  .nav a:hover,.nav a.active{color:var(--white);background:rgba(201,168,76,0.08);border-left-color:var(--gold);}
+  .nav a.active{color:var(--gold-light);}
+  .nav a .icon{width:20px;text-align:center;font-size:1.1rem;}
+  .sidebar-user{padding:16px 20px;border-top:1px solid var(--border);}
+  .user-info{display:flex;align-items:center;gap:10px;}
+  .user-avatar{width:36px;height:36px;background:linear-gradient(135deg,var(--gold),var(--green));border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1rem;font-weight:bold;color:var(--bg);}
+  .user-name{font-size:0.9rem;color:var(--cream);}
+  .user-role{font-size:0.75rem;color:var(--muted);text-transform:uppercase;letter-spacing:1px;}
+  .main{margin-left:260px;flex:1;padding:28px;min-height:100vh;}
+  .topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:28px;flex-wrap:wrap;gap:16px;}
+  .topbar h1{font-family:'Playfair Display',serif;font-size:1.8rem;color:var(--cream);}
+  .btn-gold{background:linear-gradient(135deg,#c9a84c,#e8c86e);border:none;color:#0a1a0e;padding:12px 24px;border-radius:10px;font-family:'Crimson Pro',serif;font-size:0.95rem;font-weight:600;cursor:pointer;transition:all 0.2s;}
+  .btn-gold:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(201,168,76,0.3);}
+  /* Filters */
+  .filters{display:flex;gap:12px;margin-bottom:24px;flex-wrap:wrap;}
+  .filter-input{background:rgba(13,36,20,0.8);border:1px solid var(--border);border-radius:10px;padding:10px 16px;color:var(--white);font-family:'Crimson Pro',serif;font-size:0.95rem;outline:none;transition:all 0.2s;}
+  .filter-input:focus{border-color:var(--gold);}
+  .filter-input::placeholder{color:var(--muted);}
+  .filter-btn{background:rgba(13,36,20,0.8);border:1px solid var(--border);border-radius:10px;padding:10px 16px;color:var(--muted);font-family:'Crimson Pro',serif;font-size:0.9rem;cursor:pointer;transition:all 0.2s;}
+  .filter-btn:hover,.filter-btn.active{border-color:var(--gold);color:var(--gold-light);}
+  /* Animal Cards Grid */
+  .animals-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:20px;}
+  .animal-card{background:var(--card);border:1px solid var(--border);border-radius:16px;overflow:hidden;transition:all 0.3s;position:relative;}
+  .animal-card:hover{transform:translateY(-4px);border-color:rgba(201,168,76,0.4);box-shadow:0 12px 30px rgba(0,0,0,0.4);}
+  .animal-card img{width:100%;height:180px;object-fit:cover;}
+  .animal-ph{width:100%;height:180px;background:linear-gradient(135deg,#1a3d22,#0d2414);display:flex;align-items:center;justify-content:center;font-size:4rem;}
+  .card-body{padding:16px;}
+  .card-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;}
+  .animal-name{font-family:'Playfair Display',serif;font-size:1.2rem;color:var(--cream);}
+  .animal-species{color:var(--muted);font-style:italic;font-size:0.85rem;}
+  .badge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:0.7rem;text-transform:uppercase;letter-spacing:1px;}
+  .badge.healthy{background:rgba(45,110,62,0.3);color:#7eff90;border:1px solid rgba(45,110,62,0.4);}
+  .badge.sick{background:rgba(192,57,43,0.3);color:#ff7070;border:1px solid rgba(192,57,43,0.4);}
+  .badge.recovering{background:rgba(230,126,34,0.3);color:#ffb347;border:1px solid rgba(230,126,34,0.4);}
+  .badge.critical{background:rgba(192,57,43,0.5);color:#fff;border:1px solid rgba(192,57,43,0.8);}
+  .badge.deceased{background:rgba(100,100,100,0.3);color:#aaa;border:1px solid rgba(100,100,100,0.4);}
+  .card-meta{display:flex;gap:16px;margin:10px 0;font-size:0.85rem;color:var(--muted);}
+  .card-meta span{display:flex;align-items:center;gap:4px;}
+  .card-actions{display:flex;gap:8px;margin-top:12px;}
+  .btn-sm{padding:7px 14px;border-radius:8px;font-size:0.82rem;cursor:pointer;font-family:'Crimson Pro',serif;transition:all 0.2s;border:none;}
+  .btn-view{background:rgba(201,168,76,0.15);color:var(--gold-light);border:1px solid rgba(201,168,76,0.3);}
+  .btn-view:hover{background:rgba(201,168,76,0.3);}
+  .btn-edit{background:rgba(41,128,185,0.15);color:#74b9e7;border:1px solid rgba(41,128,185,0.3);}
+  .btn-edit:hover{background:rgba(41,128,185,0.3);}
+  .btn-del{background:rgba(192,57,43,0.15);color:#ff7070;border:1px solid rgba(192,57,43,0.3);}
+  .btn-del:hover{background:rgba(192,57,43,0.3);}
+  .endangered-tag{position:absolute;top:12px;left:12px;background:rgba(192,57,43,0.8);color:#fff;padding:3px 8px;border-radius:6px;font-size:0.7rem;letter-spacing:1px;}
+
+  /* Modal */
+  .modal-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.7);z-index:999;display:none;align-items:center;justify-content:center;padding:20px;}
+  .modal-overlay.open{display:flex;}
+  .modal{background:#0d2414;border:1px solid var(--border);border-radius:20px;width:100%;max-width:680px;max-height:90vh;overflow-y:auto;}
+  .modal-head{padding:24px 28px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;background:#0d2414;z-index:1;}
+  .modal-head h3{font-family:'Playfair Display',serif;color:var(--cream);font-size:1.3rem;}
+  .modal-close{background:none;border:none;color:var(--muted);font-size:1.5rem;cursor:pointer;line-height:1;transition:color 0.2s;}
+  .modal-close:hover{color:var(--white);}
+  .modal-body{padding:28px;}
+  .form-row{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;}
+  .form-row.tri{grid-template-columns:1fr 1fr 1fr;}
+  .fg{margin-bottom:16px;}
+  .fg.full{grid-column:1/-1;}
+  .fg label{display:block;color:var(--gold-light);font-size:0.75rem;letter-spacing:2px;text-transform:uppercase;margin-bottom:7px;}
+  .fg input,.fg select,.fg textarea{width:100%;background:rgba(10,26,14,0.7);border:1px solid var(--border);border-radius:10px;padding:12px 16px;color:var(--white);font-family:'Crimson Pro',serif;font-size:0.95rem;outline:none;transition:all 0.2s;}
+  .fg input:focus,.fg select:focus,.fg textarea:focus{border-color:var(--gold);}
+  .fg textarea{min-height:80px;resize:vertical;}
+  .modal-foot{padding:20px 28px;border-top:1px solid var(--border);display:flex;gap:12px;justify-content:flex-end;}
+  .btn-cancel{background:rgba(255,255,255,0.05);border:1px solid var(--border);color:var(--muted);padding:12px 24px;border-radius:10px;cursor:pointer;font-family:'Crimson Pro',serif;}
+  .btn-save{background:linear-gradient(135deg,#c9a84c,#e8c86e);border:none;color:#0a1a0e;padding:12px 28px;border-radius:10px;font-family:'Crimson Pro',serif;font-weight:600;font-size:1rem;cursor:pointer;transition:all 0.2s;}
+  .btn-save:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(201,168,76,0.3);}
+  .empty{text-align:center;padding:60px;color:var(--muted);}
+  .toast{position:fixed;bottom:30px;right:30px;background:rgba(45,110,62,0.9);border:1px solid rgba(45,110,62,0.6);color:#fff;padding:14px 22px;border-radius:12px;z-index:9999;transition:all 0.3s;transform:translateY(100px);opacity:0;}
+  .toast.show{transform:translateY(0);opacity:1;}
+  .toast.error{background:rgba(192,57,43,0.9);border-color:rgba(192,57,43,0.6);}
+</style>
+</head>
+<body>
+<aside class="sidebar">
+  <div class="sidebar-logo"><h2>🦁 DIGITAL ZOO</h2><p>Admin System</p></div>
+  <nav class="nav">
+    <div class="nav-section">Main</div>
+    <a href="/dashboard"><span class="icon">📊</span> Dashboard</a>
+    <a href="/animals" class="active"><span class="icon">🐾</span> Animals</a>
+    <a href="/adoptions"><span class="icon">🤝</span> Adoptions</a>
+    <a href="/medications"><span class="icon">💊</span> Medical Records</a>
+    <div class="nav-section">Management</div>
+    <a href="/reports"><span class="icon">📈</span> Reports</a>
+  </nav>
+  <div class="sidebar-user">
+    <div class="user-info">
+      <div class="user-avatar" id="userAvatar">A</div>
+      <div><div class="user-name" id="userName">Loading...</div><div class="user-role" id="userRole">---</div></div>
+    </div>
+  </div>
+</aside>
+
+<main class="main">
+  <div class="topbar">
+    <h1>🐾 Animals Management</h1>
+    <button class="btn-gold" onclick="openModal()">+ Add Animal</button>
+  </div>
+
+  <div class="filters">
+    <input type="text" class="filter-input" id="searchInput" placeholder="🔍 Search by name, species..." oninput="filterAnimals()" style="flex:1;min-width:200px;">
+    <button class="filter-btn active" onclick="filterBy('all',this)">All</button>
+    <button class="filter-btn" onclick="filterBy('mammal',this)">🦁 Mammals</button>
+    <button class="filter-btn" onclick="filterBy('bird',this)">🦜 Birds</button>
+    <button class="filter-btn" onclick="filterBy('reptile',this)">🦎 Reptiles</button>
+    <button class="filter-btn" onclick="filterBy('fish',this)">🐟 Fish</button>
+    <select class="filter-input" id="healthFilter" onchange="filterAnimals()" style="width:160px;">
+      <option value="">All Health</option>
+      <option value="healthy">Healthy</option>
+      <option value="sick">Sick</option>
+      <option value="recovering">Recovering</option>
+      <option value="critical">Critical</option>
+    </select>
+  </div>
+
+  <div class="animals-grid" id="animalsGrid">
+    <div class="empty">Loading animals...</div>
+  </div>
+</main>
+
+<!-- Add/Edit Modal -->
+<div class="modal-overlay" id="animalModal">
+  <div class="modal">
+    <div class="modal-head">
+      <h3 id="modalTitle">Add New Animal</h3>
+      <button class="modal-close" onclick="closeModal()">×</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="editId">
+      <div class="form-row">
+        <div class="fg"><label>Animal Name *</label><input type="text" id="aName" placeholder="e.g. Simba"></div>
+        <div class="fg"><label>Species *</label><input type="text" id="aSpecies" placeholder="e.g. African Lion"></div>
+      </div>
+      <div class="form-row">
+        <div class="fg"><label>Scientific Name</label><input type="text" id="aSciName" placeholder="e.g. Panthera leo"></div>
+        <div class="fg"><label>Category *</label>
+          <select id="aCategory">
+            <option value="mammal">Mammal</option><option value="bird">Bird</option>
+            <option value="reptile">Reptile</option><option value="fish">Fish</option>
+            <option value="amphibian">Amphibian</option><option value="invertebrate">Invertebrate</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row tri">
+        <div class="fg"><label>Age</label><input type="number" id="aAge" placeholder="5" min="0"></div>
+        <div class="fg"><label>Age Unit</label>
+          <select id="aAgeUnit"><option value="years">Years</option><option value="months">Months</option><option value="days">Days</option></select>
+        </div>
+        <div class="fg"><label>Gender</label>
+          <select id="aGender"><option value="male">Male</option><option value="female">Female</option><option value="unknown">Unknown</option></select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="fg"><label>Weight (kg)</label><input type="number" id="aWeight" placeholder="150.5" step="0.1"></div>
+        <div class="fg"><label>Origin Country</label><input type="text" id="aOrigin" placeholder="Kenya"></div>
+      </div>
+      <div class="form-row">
+        <div class="fg"><label>Health Status</label>
+          <select id="aHealth">
+            <option value="healthy">Healthy</option><option value="sick">Sick</option>
+            <option value="recovering">Recovering</option><option value="critical">Critical</option>
+          </select>
+        </div>
+        <div class="fg"><label>Diet Type</label>
+          <select id="aDiet"><option value="carnivore">Carnivore</option><option value="herbivore">Herbivore</option><option value="omnivore">Omnivore</option></select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="fg"><label>Acquisition Date</label><input type="date" id="aAcqDate"></div>
+        <div class="fg"><label>Conservation Status</label>
+          <select id="aConserv">
+            <option value="LC">LC - Least Concern</option><option value="NT">NT - Near Threatened</option>
+            <option value="VU">VU - Vulnerable</option><option value="EN">EN - Endangered</option>
+            <option value="CR">CR - Critically Endangered</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="fg"><label>Enclosure/Cage</label><select id="aCage"><option value="">Not Assigned</option></select></div>
+        <div class="fg"><label>Assigned Keeper</label><select id="aKeeper"><option value="">Not Assigned</option></select></div>
+      </div>
+      <div class="fg"><label>Description</label><textarea id="aDesc" placeholder="Brief description..."></textarea></div>
+      <div class="fg"><label>Fun Facts</label><textarea id="aFacts" placeholder="Interesting facts about this animal..."></textarea></div>
+      <div class="form-row">
+        <div class="fg"><label>Photo Upload</label><input type="file" id="aImage" accept="image/*" style="color:var(--muted)"></div>
+        <div class="fg"><label>Video Upload</label><input type="file" id="aVideo" accept="video/*" style="color:var(--muted)"></div>
+      </div>
+      <div class="fg">
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+          <input type="checkbox" id="aEndangered" style="width:16px;height:16px;">
+          <span style="color:var(--cream);text-transform:none;letter-spacing:0;font-size:1rem;">Mark as Endangered Species</span>
+        </label>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn-cancel" onclick="closeModal()">Cancel</button>
+      <button class="btn-save" onclick="saveAnimal()">Save Animal</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const token = localStorage.getItem('token');
+const user = JSON.parse(localStorage.getItem('user')||'{}');
+if(!token) window.location.href='/login';
+document.getElementById('userName').textContent=user.name||'Staff';
+document.getElementById('userRole').textContent=user.role||'staff';
+document.getElementById('userAvatar').textContent=(user.name||'A')[0].toUpperCase();
+
+let allAnimals=[], currentCategory='all';
+const API=(p,o={})=>fetch('/api'+p,{headers:{'Authorization':'Bearer '+token,...(o.headers||{})},...o});
+
+const EMOJI={mammal:'🦁',bird:'🦜',reptile:'🦎',fish:'🐟',amphibian:'🐸',invertebrate:'🦋'};
+
+async function loadAnimals(){
+  try{
+    const res=await API('/animals?limit=100');
+    const d=await res.json();
+    allAnimals=d.data||[];
+    renderAnimals(allAnimals);
+  }catch(e){document.getElementById('animalsGrid').innerHTML='<div class="empty">Failed to load animals</div>';}
+}
+
+function renderAnimals(animals){
+  const g=document.getElementById('animalsGrid');
+  if(!animals.length){g.innerHTML='<div class="empty">No animals found 🐾</div>';return;}
+  g.innerHTML=animals.map(a=>`
+    <div class="animal-card" id="card-${a.id}">
+      ${a.is_endangered?'<div class="endangered-tag">⚠️ ENDANGERED</div>':''}
+      ${a.image_url?`<img src="${a.image_url}" alt="${a.name}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"><div class="animal-ph" style="display:none">${EMOJI[a.category]||'🐾'}</div>`:`<div class="animal-ph">${EMOJI[a.category]||'🐾'}</div>`}
+      <div class="card-body">
+        <div class="card-top">
+          <div><div class="animal-name">${a.name}</div><div class="animal-species">${a.species}</div></div>
+          <span class="badge ${a.health_status}">${a.health_status}</span>
+        </div>
+        <div class="card-meta">
+          <span>⚧ ${a.gender||'—'}</span>
+          <span>📅 ${a.age||'?'} ${a.age_unit||'yr'}</span>
+          <span>⚖️ ${a.weight||'?'}kg</span>
+        </div>
+        ${a.cage_name?`<div style="color:var(--muted);font-size:0.82rem;margin-bottom:8px">🏠 ${a.cage_name}</div>`:''}
+        <div class="card-actions">
+          <button class="btn-sm btn-view" onclick="window.location.href='/animal/${a.id}'">👁 View</button>
+          <button class="btn-sm btn-edit" onclick="editAnimal(${a.id})">✏️ Edit</button>
+          <button class="btn-sm btn-del" onclick="deleteAnimal(${a.id},'${a.name}')">🗑 Delete</button>
+        </div>
+      </div>
+    </div>`).join('');
+}
+
+function filterBy(cat,btn){
+  currentCategory=cat;
+  document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  filterAnimals();
+}
+
+function filterAnimals(){
+  const q=document.getElementById('searchInput').value.toLowerCase();
+  const h=document.getElementById('healthFilter').value;
+  let filtered=allAnimals.filter(a=>{
+    const matchCat=currentCategory==='all'||a.category===currentCategory;
+    const matchQ=!q||(a.name.toLowerCase().includes(q)||a.species.toLowerCase().includes(q)||(a.scientific_name||'').toLowerCase().includes(q));
+    const matchH=!h||a.health_status===h;
+    return matchCat&&matchQ&&matchH;
+  });
+  renderAnimals(filtered);
+}
+
+let cages=[], staff=[];
+async function loadFormData(){
+  try{
+    const [cr,sr]=await Promise.all([API('/animals/data/cages'),API('/dashboard/staff')]);
+    const cd=await cr.json(); const sd=await sr.json();
+    cages=cd.data||[]; staff=sd.data||[];
+    const cs=document.getElementById('aCage');
+    cs.innerHTML='<option value="">Not Assigned</option>'+cages.map(c=>`<option value="${c.id}">${c.cage_number} - ${c.name}</option>`).join('');
+    const ks=document.getElementById('aKeeper');
+    ks.innerHTML='<option value="">Not Assigned</option>'+staff.filter(s=>['zookeeper','admin'].includes(s.role)).map(s=>`<option value="${s.id}">${s.name}</option>`).join('');
+  }catch(e){}
+}
+
+function openModal(){
+  document.getElementById('editId').value='';
+  document.getElementById('modalTitle').textContent='Add New Animal';
+  document.getElementById('aName').value='';
+  document.getElementById('aSpecies').value='';
+  document.getElementById('aSciName').value='';
+  document.getElementById('aCategory').value='mammal';
+  document.getElementById('aAge').value='';
+  document.getElementById('aGender').value='male';
+  document.getElementById('aWeight').value='';
+  document.getElementById('aOrigin').value='';
+  document.getElementById('aHealth').value='healthy';
+  document.getElementById('aDiet').value='carnivore';
+  document.getElementById('aDesc').value='';
+  document.getElementById('aFacts').value='';
+  document.getElementById('aEndangered').checked=false;
+  document.getElementById('aConserv').value='LC';
+  document.getElementById('animalModal').classList.add('open');
+}
+
+async function editAnimal(id){
+  try{
+    const res=await API('/animals/'+id);
+    const {data}=await res.json();
+    document.getElementById('editId').value=id;
+    document.getElementById('modalTitle').textContent='Edit '+data.name;
+    document.getElementById('aName').value=data.name||'';
+    document.getElementById('aSpecies').value=data.species||'';
+    document.getElementById('aSciName').value=data.scientific_name||'';
+    document.getElementById('aCategory').value=data.category||'mammal';
+    document.getElementById('aAge').value=data.age||'';
+    document.getElementById('aAgeUnit').value=data.age_unit||'years';
+    document.getElementById('aGender').value=data.gender||'male';
+    document.getElementById('aWeight').value=data.weight||'';
+    document.getElementById('aOrigin').value=data.origin_country||'';
+    document.getElementById('aHealth').value=data.health_status||'healthy';
+    document.getElementById('aDiet').value=data.diet_type||'carnivore';
+    document.getElementById('aDesc').value=data.description||'';
+    document.getElementById('aFacts').value=data.fun_facts||'';
+    document.getElementById('aEndangered').checked=!!data.is_endangered;
+    document.getElementById('aConserv').value=data.conservation_status||'LC';
+    if(data.cage_id) document.getElementById('aCage').value=data.cage_id;
+    if(data.assigned_keeper) document.getElementById('aKeeper').value=data.assigned_keeper;
+    document.getElementById('animalModal').classList.add('open');
+  }catch(e){showToast('Failed to load animal data','error');}
+}
+
+async function saveAnimal(){
+  const id=document.getElementById('editId').value;
+  const fd=new FormData();
+  fd.append('name',document.getElementById('aName').value);
+  fd.append('species',document.getElementById('aSpecies').value);
+  fd.append('scientific_name',document.getElementById('aSciName').value);
+  fd.append('category',document.getElementById('aCategory').value);
+  fd.append('age',document.getElementById('aAge').value);
+  fd.append('age_unit',document.getElementById('aAgeUnit').value);
+  fd.append('gender',document.getElementById('aGender').value);
+  fd.append('weight',document.getElementById('aWeight').value);
+  fd.append('origin_country',document.getElementById('aOrigin').value);
+  fd.append('health_status',document.getElementById('aHealth').value);
+  fd.append('diet_type',document.getElementById('aDiet').value);
+  fd.append('description',document.getElementById('aDesc').value);
+  fd.append('fun_facts',document.getElementById('aFacts').value);
+  fd.append('is_endangered',document.getElementById('aEndangered').checked);
+  fd.append('conservation_status',document.getElementById('aConserv').value);
+  fd.append('cage_id',document.getElementById('aCage').value);
+  fd.append('assigned_keeper',document.getElementById('aKeeper').value);
+  const img=document.getElementById('aImage').files[0];
+  const vid=document.getElementById('aVideo').files[0];
+  if(img) fd.append('image',img);
+  if(vid) fd.append('video',vid);
+  if(!document.getElementById('aName').value||!document.getElementById('aSpecies').value){showToast('Name and species required','error');return;}
+  try{
+    const res=await fetch('/api/animals'+(id?'/'+id:''),{method:id?'PUT':'POST',headers:{'Authorization':'Bearer '+token},body:fd});
+    const d=await res.json();
+    if(d.success){showToast(id?'Animal updated!':'Animal added!');closeModal();loadAnimals();}
+    else showToast(d.message||'Failed','error');
+  }catch(e){showToast('Server error','error');}
+}
+
+async function deleteAnimal(id,name){
+  if(!confirm(`Delete ${name}? This cannot be undone.`)) return;
+  try{
+    const res=await API('/animals/'+id,{method:'DELETE'});
+    const d=await res.json();
+    if(d.success){showToast(name+' removed'); document.getElementById('card-'+id)?.remove();}
+    else showToast(d.message||'Failed','error');
+  }catch(e){showToast('Server error','error');}
+}
+
+function closeModal(){ document.getElementById('animalModal').classList.remove('open'); }
+
+function showToast(msg,type='success'){
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.className='toast '+type+' show';
+  setTimeout(()=>t.classList.remove('show'),3000);
+}
+
+loadFormData();
+loadAnimals();
+</script>
+</body>
+</html>

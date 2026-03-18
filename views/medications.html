@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <link rel="stylesheet" href="/css/jungle.css">
+<link rel="stylesheet" href="/css/animations.css">
+<link rel="stylesheet" href="/css/theme.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Digital Zoo — Medical Records</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Crimson+Pro:wght@300;400;600&display=swap" rel="stylesheet">
+<style>
+  :root{--bg:#0a1a0e;--sidebar:#0d2414;--card:#0f2818;--gold:#c9a84c;--gold-light:#e8c86e;--cream:#f5ead5;--white:#faf7f0;--green:#2d6e3e;--muted:#8a9e8e;--danger:#c0392b;--border:rgba(201,168,76,0.15);}
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{font-family:'Crimson Pro',serif;background:var(--bg);color:var(--white);display:flex;min-height:100vh;}
+  .sidebar{width:260px;background:var(--sidebar);border-right:1px solid var(--border);display:flex;flex-direction:column;position:fixed;top:0;left:0;height:100vh;z-index:100;}
+  .sidebar-logo{padding:24px 20px;border-bottom:1px solid var(--border);}
+  .sidebar-logo h2{font-family:'Playfair Display',serif;background:linear-gradient(135deg,#c9a84c,#e8c86e);-webkit-background-clip:text;-webkit-text-fill-color:transparent;font-size:1.3rem;}
+  .sidebar-logo p{color:var(--muted);font-size:0.75rem;letter-spacing:2px;text-transform:uppercase;margin-top:2px;}
+  .nav{flex:1;padding:16px 0;}
+  .nav-section{padding:8px 20px;color:var(--muted);font-size:0.7rem;letter-spacing:3px;text-transform:uppercase;margin-top:8px;}
+  .nav a{display:flex;align-items:center;gap:12px;padding:12px 20px;color:var(--muted);text-decoration:none;transition:all 0.2s;font-size:0.95rem;border-left:3px solid transparent;}
+  .nav a:hover,.nav a.active{color:var(--white);background:rgba(201,168,76,0.08);border-left-color:var(--gold);}
+  .nav a.active{color:var(--gold-light);}
+  .nav a .icon{width:20px;text-align:center;font-size:1.1rem;}
+  .sidebar-user{padding:16px 20px;border-top:1px solid var(--border);}
+  .user-info{display:flex;align-items:center;gap:10px;}
+  .user-avatar{width:36px;height:36px;background:linear-gradient(135deg,var(--gold),var(--green));border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:bold;color:var(--bg);}
+  .user-name{font-size:0.9rem;color:var(--cream);}
+  .user-role{font-size:0.75rem;color:var(--muted);text-transform:uppercase;}
+  .main{margin-left:260px;flex:1;padding:28px;min-height:100vh;}
+  .topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:28px;flex-wrap:wrap;gap:16px;}
+  .topbar h1{font-family:'Playfair Display',serif;font-size:1.8rem;color:var(--cream);}
+  .btn-gold{background:linear-gradient(135deg,#c9a84c,#e8c86e);border:none;color:#0a1a0e;padding:12px 24px;border-radius:10px;font-family:'Crimson Pro',serif;font-size:0.95rem;font-weight:600;cursor:pointer;transition:all 0.2s;}
+  .btn-gold:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(201,168,76,0.3);}
+  .tabs{display:flex;gap:4px;margin-bottom:24px;background:var(--card);border:1px solid var(--border);border-radius:12px;padding:4px;width:fit-content;}
+  .tab{padding:10px 22px;border-radius:9px;cursor:pointer;color:var(--muted);font-size:0.9rem;transition:all 0.2s;border:none;background:none;font-family:'Crimson Pro',serif;}
+  .tab.active{background:linear-gradient(135deg,#c9a84c,#e8c86e);color:#0a1a0e;font-weight:600;}
+  .filters{display:flex;gap:12px;margin-bottom:20px;flex-wrap:wrap;}
+  .filter-input{background:rgba(13,36,20,0.8);border:1px solid var(--border);border-radius:10px;padding:10px 16px;color:var(--white);font-family:'Crimson Pro',serif;font-size:0.9rem;outline:none;transition:all 0.2s;}
+  .filter-input:focus{border-color:var(--gold);}
+  .filter-input::placeholder{color:var(--muted);}
+  .med-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:16px;}
+  .med-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:20px;transition:all 0.2s;}
+  .med-card:hover{border-color:rgba(201,168,76,0.3);transform:translateY(-2px);}
+  .med-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px;}
+  .med-name{font-family:'Playfair Display',serif;color:var(--cream);font-size:1.1rem;}
+  .badge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:0.7rem;text-transform:uppercase;letter-spacing:1px;}
+  .badge.ongoing{background:rgba(41,128,185,0.3);color:#74b9e7;border:1px solid rgba(41,128,185,0.4);}
+  .badge.scheduled{background:rgba(230,126,34,0.3);color:#ffb347;border:1px solid rgba(230,126,34,0.4);}
+  .badge.completed{background:rgba(45,110,62,0.3);color:#7eff90;border:1px solid rgba(45,110,62,0.4);}
+  .badge.cancelled{background:rgba(150,150,150,0.3);color:#aaa;border:1px solid rgba(150,150,150,0.4);}
+  .med-animal{color:var(--gold-light);font-size:0.9rem;margin-bottom:6px;}
+  .med-detail{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:10px 0;}
+  .med-detail-item{background:rgba(10,26,14,0.5);border-radius:8px;padding:8px 12px;}
+  .med-detail-item .lbl{color:var(--muted);font-size:0.72rem;text-transform:uppercase;letter-spacing:1px;}
+  .med-detail-item .val{color:var(--cream);font-size:0.9rem;margin-top:2px;}
+  .med-reason{color:var(--muted);font-size:0.85rem;font-style:italic;margin-top:8px;padding-top:8px;border-top:1px solid var(--border);}
+  .med-vet{color:var(--muted);font-size:0.8rem;margin-top:6px;}
+  .btn-complete{background:rgba(45,110,62,0.2);border:1px solid rgba(45,110,62,0.4);color:#7eff90;padding:6px 12px;border-radius:7px;font-size:0.8rem;cursor:pointer;font-family:'Crimson Pro',serif;transition:all 0.2s;}
+  .btn-complete:hover{background:rgba(45,110,62,0.4);}
+
+  /* Visit log */
+  .visit-list{display:flex;flex-direction:column;gap:12px;}
+  .visit-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px;display:grid;grid-template-columns:auto 1fr auto;gap:16px;align-items:start;transition:all 0.2s;}
+  .visit-card:hover{border-color:rgba(201,168,76,0.3);}
+  .visit-icon{width:44px;height:44px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.3rem;}
+  .vi-feeding{background:rgba(201,168,76,0.15);}
+  .vi-health_check{background:rgba(41,128,185,0.15);}
+  .vi-grooming{background:rgba(142,68,173,0.15);}
+  .vi-training{background:rgba(45,110,62,0.15);}
+  .vi-observation{background:rgba(100,100,100,0.15);}
+  .vi-emergency{background:rgba(192,57,43,0.15);}
+  .visit-info h4{color:var(--cream);font-size:0.95rem;margin-bottom:4px;}
+  .visit-meta{color:var(--muted);font-size:0.82rem;}
+  .visit-obs{color:var(--cream);font-size:0.85rem;margin-top:6px;font-style:italic;}
+  .visit-time{color:var(--muted);font-size:0.78rem;text-align:right;white-space:nowrap;}
+
+  .modal-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.7);z-index:999;display:none;align-items:center;justify-content:center;padding:20px;}
+  .modal-overlay.open{display:flex;}
+  .modal{background:#0d2414;border:1px solid var(--border);border-radius:20px;width:100%;max-width:620px;max-height:90vh;overflow-y:auto;}
+  .modal-head{padding:24px 28px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;background:#0d2414;}
+  .modal-head h3{font-family:'Playfair Display',serif;color:var(--cream);font-size:1.3rem;}
+  .modal-close{background:none;border:none;color:var(--muted);font-size:1.5rem;cursor:pointer;}
+  .modal-body{padding:28px;}
+  .form-row{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;}
+  .fg{margin-bottom:16px;}
+  .fg label{display:block;color:var(--gold-light);font-size:0.75rem;letter-spacing:2px;text-transform:uppercase;margin-bottom:7px;}
+  .fg input,.fg select,.fg textarea{width:100%;background:rgba(10,26,14,0.7);border:1px solid var(--border);border-radius:10px;padding:12px 16px;color:var(--white);font-family:'Crimson Pro',serif;font-size:0.95rem;outline:none;transition:all 0.2s;}
+  .fg input:focus,.fg select:focus,.fg textarea:focus{border-color:var(--gold);}
+  .fg textarea{resize:vertical;min-height:80px;}
+  .modal-foot{padding:20px 28px;border-top:1px solid var(--border);display:flex;gap:12px;justify-content:flex-end;}
+  .btn-cancel{background:rgba(255,255,255,0.05);border:1px solid var(--border);color:var(--muted);padding:12px 24px;border-radius:10px;cursor:pointer;font-family:'Crimson Pro',serif;}
+  .btn-save{background:linear-gradient(135deg,#c9a84c,#e8c86e);border:none;color:#0a1a0e;padding:12px 28px;border-radius:10px;font-family:'Crimson Pro',serif;font-weight:600;cursor:pointer;}
+  .empty{text-align:center;padding:40px;color:var(--muted);}
+  .toast{position:fixed;bottom:30px;right:30px;background:rgba(45,110,62,0.9);border:1px solid rgba(45,110,62,0.6);color:#fff;padding:14px 22px;border-radius:12px;z-index:9999;transition:all 0.3s;transform:translateY(100px);opacity:0;}
+  .toast.show{transform:translateY(0);opacity:1;}
+  .toast.error{background:rgba(192,57,43,0.9);}
+</style>
+</head>
+<body>
+<aside class="sidebar">
+  <div class="sidebar-logo"><h2>🦁 DIGITAL ZOO</h2><p>Admin System</p></div>
+  <nav class="nav">
+    <div class="nav-section">Main</div>
+    <a href="/dashboard"><span class="icon">📊</span> Dashboard</a>
+    <a href="/animals"><span class="icon">🐾</span> Animals</a>
+    <a href="/adoptions"><span class="icon">🤝</span> Adoptions</a>
+    <a href="/medications" class="active"><span class="icon">💊</span> Medical Records</a>
+    <div class="nav-section">Management</div>
+    <a href="/reports"><span class="icon">📈</span> Reports</a>
+  </nav>
+  <div class="sidebar-user">
+    <div class="user-info">
+      <div class="user-avatar" id="userAvatar">A</div>
+      <div><div class="user-name" id="userName">Loading...</div><div class="user-role" id="userRole">---</div></div>
+    </div>
+  </div>
+</aside>
+
+<main class="main">
+  <div class="topbar">
+    <h1>💊 Medical Records</h1>
+    <div style="display:flex;gap:12px;">
+      <button class="btn-gold" onclick="openVisitModal()">+ Log Visit</button>
+      <button class="btn-gold" onclick="openMedModal()">+ Add Medication</button>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('meds',this)">💊 Medications</button>
+    <button class="tab" onclick="switchTab('visits',this)">👁 Visit Log</button>
+  </div>
+
+  <div id="medsSection">
+    <div class="filters">
+      <select class="filter-input" id="medStatus" onchange="loadMeds()" style="width:180px;">
+        <option value="">All Status</option>
+        <option value="ongoing">Ongoing</option>
+        <option value="scheduled">Scheduled</option>
+        <option value="completed">Completed</option>
+        <option value="cancelled">Cancelled</option>
+      </select>
+    </div>
+    <div class="med-grid" id="medGrid"><div class="empty">Loading medications...</div></div>
+  </div>
+
+  <div id="visitsSection" style="display:none;">
+    <div class="visit-list" id="visitList"><div class="empty">Loading visits...</div></div>
+  </div>
+</main>
+
+<!-- Medication Modal -->
+<div class="modal-overlay" id="medModal">
+  <div class="modal">
+    <div class="modal-head"><h3>💊 Add Medication Record</h3><button class="modal-close" onclick="closeMedModal()">×</button></div>
+    <div class="modal-body">
+      <div class="fg"><label>Animal *</label><select id="mAnimal"><option value="">Select animal...</option></select></div>
+      <div class="form-row">
+        <div class="fg"><label>Medication Name *</label><input type="text" id="mName" placeholder="e.g. Vitamin D3"></div>
+        <div class="fg"><label>Dosage</label><input type="text" id="mDosage" placeholder="e.g. 500mg"></div>
+      </div>
+      <div class="form-row">
+        <div class="fg"><label>Frequency</label><input type="text" id="mFreq" placeholder="e.g. Once daily"></div>
+        <div class="fg"><label>Start Date *</label><input type="date" id="mStart"></div>
+      </div>
+      <div class="fg"><label>End Date</label><input type="date" id="mEnd"></div>
+      <div class="fg"><label>Reason / Diagnosis</label><textarea id="mReason" placeholder="Why is this medication needed?"></textarea></div>
+      <div class="fg"><label>Prescription Notes</label><textarea id="mNotes" placeholder="Special instructions..."></textarea></div>
+      <div class="fg"><label>Side Effects to Watch</label><input type="text" id="mSide" placeholder="e.g. Drowsiness, reduced appetite"></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn-cancel" onclick="closeMedModal()">Cancel</button>
+      <button class="btn-save" onclick="saveMed()">Add Record</button>
+    </div>
+  </div>
+</div>
+
+<!-- Visit Modal -->
+<div class="modal-overlay" id="visitModal">
+  <div class="modal">
+    <div class="modal-head"><h3>👁 Log Animal Visit</h3><button class="modal-close" onclick="closeVisitModal()">×</button></div>
+    <div class="modal-body">
+      <div class="fg"><label>Animal *</label><select id="vAnimal"><option value="">Select animal...</option></select></div>
+      <div class="form-row">
+        <div class="fg"><label>Visit Type</label>
+          <select id="vType">
+            <option value="observation">Observation</option>
+            <option value="feeding">Feeding</option>
+            <option value="health_check">Health Check</option>
+            <option value="grooming">Grooming</option>
+            <option value="training">Training</option>
+            <option value="emergency">Emergency</option>
+          </select>
+        </div>
+        <div class="fg"><label>Duration (minutes)</label><input type="number" id="vDur" placeholder="30" min="1"></div>
+      </div>
+      <div class="fg"><label>Observations</label><textarea id="vObs" placeholder="Behavioral observations, health notes..."></textarea></div>
+      <div class="fg"><label>Feeding Amount</label><input type="text" id="vFeed" placeholder="e.g. 5kg meat"></div>
+      <div class="fg"><label>Next Visit (optional)</label><input type="datetime-local" id="vNext"></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn-cancel" onclick="closeVisitModal()">Cancel</button>
+      <button class="btn-save" onclick="saveVisit()">Log Visit</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const token=localStorage.getItem('token');
+const user=JSON.parse(localStorage.getItem('user')||'{}');
+if(!token) window.location.href='/login';
+document.getElementById('userName').textContent=user.name||'Staff';
+document.getElementById('userRole').textContent=user.role||'staff';
+document.getElementById('userAvatar').textContent=(user.name||'A')[0].toUpperCase();
+
+const VISIT_ICONS={feeding:'🍖',health_check:'🩺',grooming:'✂️',training:'🏋️',observation:'👁',emergency:'🚨'};
+
+function switchTab(tab,btn){
+  document.querySelectorAll('.tab').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('medsSection').style.display=tab==='meds'?'block':'none';
+  document.getElementById('visitsSection').style.display=tab==='visits'?'block':'none';
+  if(tab==='visits') loadVisits();
+}
+
+async function loadMeds(){
+  const status=document.getElementById('medStatus').value;
+  try{
+    const res=await fetch('/api/medications?limit=50'+(status?'&status='+status:''),{headers:{'Authorization':'Bearer '+token}});
+    const {data}=await res.json();
+    const g=document.getElementById('medGrid');
+    if(!data?.length){g.innerHTML='<div class="empty">No medication records found</div>';return;}
+    g.innerHTML=data.map(m=>`
+      <div class="med-card">
+        <div class="med-top">
+          <div class="med-name">${m.medication_name}</div>
+          <span class="badge ${m.status}">${m.status}</span>
+        </div>
+        <div class="med-animal">🐾 ${m.animal_name} <span style="color:var(--muted);font-size:0.8rem">(${m.species})</span></div>
+        <div class="med-detail">
+          <div class="med-detail-item"><div class="lbl">Dosage</div><div class="val">${m.dosage||'—'}</div></div>
+          <div class="med-detail-item"><div class="lbl">Frequency</div><div class="val">${m.frequency||'—'}</div></div>
+          <div class="med-detail-item"><div class="lbl">Start Date</div><div class="val">${new Date(m.start_date).toLocaleDateString('en-IN')}</div></div>
+          <div class="med-detail-item"><div class="lbl">End Date</div><div class="val">${m.end_date?new Date(m.end_date).toLocaleDateString('en-IN'):'Ongoing'}</div></div>
+        </div>
+        ${m.reason?`<div class="med-reason">📋 ${m.reason}</div>`:''}
+        ${m.side_effects?`<div class="med-reason" style="color:#ffb347">⚠️ Side effects: ${m.side_effects}</div>`:''}
+        <div class="med-vet">👨‍⚕️ Prescribed by: ${m.vet_name||'N/A'}</div>
+        ${m.status==='ongoing'?`<button class="btn-complete" style="margin-top:10px" onclick="completeMed(${m.id})">✓ Mark Complete</button>`:''}
+      </div>`).join('');
+  }catch(e){console.error(e);}
+}
+
+async function loadVisits(){
+  try{
+    const res=await fetch('/api/medications/visits/all?limit=50',{headers:{'Authorization':'Bearer '+token}});
+    const {data}=await res.json();
+    const vl=document.getElementById('visitList');
+    if(!data?.length){vl.innerHTML='<div class="empty">No visits recorded yet</div>';return;}
+    vl.innerHTML=data.map(v=>`
+      <div class="visit-card">
+        <div class="visit-icon vi-${v.visit_type}">${VISIT_ICONS[v.visit_type]||'👁'}</div>
+        <div class="visit-info">
+          <h4>${v.animal_name} — ${v.visit_type.replace('_',' ')}</h4>
+          <div class="visit-meta">🧑 ${v.keeper_name||'Unknown'} ${v.duration_minutes?`| ⏱ ${v.duration_minutes} min`:''} ${v.feeding_amount?`| 🍖 ${v.feeding_amount}`:''}</div>
+          ${v.observations?`<div class="visit-obs">"${v.observations}"</div>`:''}
+        </div>
+        <div class="visit-time">${new Date(v.visit_date).toLocaleDateString('en-IN')}<br>${new Date(v.visit_date).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'})}</div>
+      </div>`).join('');
+  }catch(e){console.error(e);}
+}
+
+async function loadAnimals(selectId){
+  const res=await fetch('/api/animals?limit=100',{headers:{'Authorization':'Bearer '+token}});
+  const {data}=await res.json();
+  document.getElementById(selectId).innerHTML='<option value="">Select animal...</option>'+(data||[]).map(a=>`<option value="${a.id}">${a.name} (${a.species})</option>`).join('');
+}
+
+function openMedModal(){
+  document.getElementById('medModal').classList.add('open');
+  loadAnimals('mAnimal');
+  document.getElementById('mStart').valueAsDate=new Date();
+}
+function closeMedModal(){document.getElementById('medModal').classList.remove('open');}
+
+function openVisitModal(){
+  document.getElementById('visitModal').classList.add('open');
+  loadAnimals('vAnimal');
+}
+function closeVisitModal(){document.getElementById('visitModal').classList.remove('open');}
+
+async function saveMed(){
+  const body={animal_id:document.getElementById('mAnimal').value,medication_name:document.getElementById('mName').value,dosage:document.getElementById('mDosage').value,frequency:document.getElementById('mFreq').value,start_date:document.getElementById('mStart').value,end_date:document.getElementById('mEnd').value,reason:document.getElementById('mReason').value,prescription_notes:document.getElementById('mNotes').value,side_effects:document.getElementById('mSide').value};
+  if(!body.animal_id||!body.medication_name||!body.start_date){showToast('Animal, medication and start date required','error');return;}
+  try{
+    const res=await fetch('/api/medications',{method:'POST',headers:{'Authorization':'Bearer '+token,'Content-Type':'application/json'},body:JSON.stringify(body)});
+    const d=await res.json();
+    if(d.success){showToast('Medication record added!');closeMedModal();loadMeds();}
+    else showToast(d.message||'Failed','error');
+  }catch(e){showToast('Server error','error');}
+}
+
+async function saveVisit(){
+  const body={animal_id:document.getElementById('vAnimal').value,visit_type:document.getElementById('vType').value,duration_minutes:document.getElementById('vDur').value,observations:document.getElementById('vObs').value,feeding_amount:document.getElementById('vFeed').value,next_visit:document.getElementById('vNext').value};
+  if(!body.animal_id){showToast('Please select an animal','error');return;}
+  try{
+    const res=await fetch('/api/medications/visits',{method:'POST',headers:{'Authorization':'Bearer '+token,'Content-Type':'application/json'},body:JSON.stringify(body)});
+    const d=await res.json();
+    if(d.success){showToast('Visit logged!');closeVisitModal();loadVisits();}
+    else showToast(d.message||'Failed','error');
+  }catch(e){showToast('Server error','error');}
+}
+
+async function completeMed(id){
+  const res=await fetch('/api/medications/'+id,{method:'PUT',headers:{'Authorization':'Bearer '+token,'Content-Type':'application/json'},body:JSON.stringify({status:'completed',end_date:new Date().toISOString().split('T')[0]})});
+  const d=await res.json();
+  if(d.success){showToast('Marked as completed!');loadMeds();}
+}
+
+function showToast(msg,type='success'){const t=document.getElementById('toast');t.textContent=msg;t.className='toast '+type+' show';setTimeout(()=>t.classList.remove('show'),3500);}
+loadMeds();
+</script>
+</body>
+</html>

@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <link rel="stylesheet" href="/css/jungle.css">
+<link rel="stylesheet" href="/css/animations.css">
+<link rel="stylesheet" href="/css/theme.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Digital Zoo — Register Staff</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Crimson+Pro:wght@300;400;600&display=swap" rel="stylesheet">
+<style>
+  :root{--jungle-dark:#0a1a0e;--jungle-deep:#0d2414;--gold:#c9a84c;--gold-light:#e8c86e;--cream:#f5ead5;--text-muted:#8a9e8e;}
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{min-height:100vh;background:linear-gradient(135deg,#0a1a0e 0%,#0d2414 50%,#0a1a0e 100%);font-family:'Crimson Pro',serif;display:flex;align-items:center;justify-content:center;padding:20px;}
+  .wrap{width:100%;max-width:520px;}
+  .back{color:var(--gold);text-decoration:none;font-size:0.9rem;display:flex;align-items:center;gap:6px;margin-bottom:20px;transition:all 0.2s;}
+  .back:hover{gap:10px;}
+  .logo{text-align:center;margin-bottom:28px;}
+  .logo h1{font-family:'Playfair Display',serif;font-size:1.8rem;background:linear-gradient(135deg,#c9a84c,#e8c86e);-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+  .card{background:rgba(13,36,20,0.9);backdrop-filter:blur(20px);border:1px solid rgba(201,168,76,0.2);border-radius:20px;padding:40px;}
+  .card h2{font-family:'Playfair Display',serif;color:var(--cream);margin-bottom:6px;}
+  .card .sub{color:var(--text-muted);font-size:0.9rem;margin-bottom:28px;}
+  .row{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+  .fg{margin-bottom:18px;}
+  .fg label{display:block;color:var(--gold-light);font-size:0.75rem;letter-spacing:2px;text-transform:uppercase;margin-bottom:7px;}
+  .fg input,.fg select{width:100%;background:rgba(10,26,14,0.7);border:1px solid rgba(201,168,76,0.2);border-radius:10px;padding:13px 16px;color:#faf7f0;font-family:'Crimson Pro',serif;font-size:1rem;outline:none;transition:all 0.3s;}
+  .fg select{appearance:none;cursor:pointer;}
+  .fg input:focus,.fg select:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(201,168,76,0.1);}
+  .fg input::placeholder{color:rgba(138,158,142,0.5);}
+  .btn{width:100%;padding:16px;background:linear-gradient(135deg,#c9a84c,#e8c86e);border:none;border-radius:10px;color:#0a1a0e;font-family:'Playfair Display',serif;font-size:1rem;font-weight:700;letter-spacing:2px;cursor:pointer;transition:all 0.3s;text-transform:uppercase;margin-top:8px;}
+  .btn:hover{transform:translateY(-2px);box-shadow:0 8px 25px rgba(201,168,76,0.4);}
+  .error{background:rgba(192,57,43,0.15);border:1px solid rgba(192,57,43,0.4);color:#ff7070;padding:12px;border-radius:8px;font-size:0.9rem;margin-bottom:16px;display:none;}
+  .success{background:rgba(45,110,62,0.2);border:1px solid rgba(45,110,62,0.5);color:#7eff90;padding:12px;border-radius:8px;font-size:0.9rem;margin-bottom:16px;display:none;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <a href="/login" class="back">← Back to Login</a>
+  <div class="logo"><h1>🦁 DIGITAL ZOO</h1></div>
+  <div class="card">
+    <h2>Register Staff</h2>
+    <p class="sub">Create a new staff account</p>
+    <div class="error" id="err"></div>
+    <div class="success" id="suc"></div>
+    <div class="row">
+      <div class="fg"><label>Full Name</label><input type="text" id="name" placeholder="John Keeper"></div>
+      <div class="fg"><label>Phone</label><input type="tel" id="phone" placeholder="+91-9876543210"></div>
+    </div>
+    <div class="fg"><label>Email Address</label><input type="email" id="email" placeholder="staff@digitalzoo.com"></div>
+    <div class="row">
+      <div class="fg"><label>Password</label><input type="password" id="password" placeholder="Min 6 characters"></div>
+      <div class="fg"><label>Confirm Password</label><input type="password" id="confirm" placeholder="Repeat password"></div>
+    </div>
+    <div class="fg">
+      <label>Role</label>
+      <select id="role">
+        <option value="staff">General Staff</option>
+        <option value="zookeeper">Zookeeper</option>
+        <option value="vet">Veterinarian</option>
+        <option value="admin">Administrator</option>
+      </select>
+    </div>
+    <button class="btn" onclick="register()">Create Account</button>
+    <p style="text-align:center;color:var(--text-muted);font-size:0.9rem;margin-top:20px;">Already have an account? <a href="/login" style="color:var(--gold)">Sign In</a></p>
+  </div>
+</div>
+<script>
+async function register(){
+  const name=document.getElementById('name').value.trim();
+  const email=document.getElementById('email').value.trim();
+  const password=document.getElementById('password').value;
+  const confirm=document.getElementById('confirm').value;
+  const role=document.getElementById('role').value;
+  const phone=document.getElementById('phone').value.trim();
+  const err=document.getElementById('err');
+  const suc=document.getElementById('suc');
+  err.style.display='none'; suc.style.display='none';
+  if(!name||!email||!password) return show(err,'All fields required');
+  if(password.length<6) return show(err,'Password must be at least 6 characters');
+  if(password!==confirm) return show(err,'Passwords do not match');
+  try{
+    const res=await fetch('/api/auth/register',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name,email,password,role,phone})});
+    const data=await res.json();
+    if(data.success){ localStorage.setItem('token',data.token); localStorage.setItem('user',JSON.stringify(data.user)); show(suc,'Account created! Redirecting...'); setTimeout(()=>window.location.href='/dashboard',1500); }
+    else show(err,data.message||'Registration failed');
+  }catch(e){ show(err,'Cannot connect to server'); }
+}
+function show(el,msg){ el.textContent=msg; el.style.display='block'; }
+document.addEventListener('keydown',e=>{ if(e.key==='Enter') register(); });
+</script>
+</body>
+</html>

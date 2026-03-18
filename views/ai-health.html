@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <link rel="stylesheet" href="/css/jungle.css">
+<link rel="stylesheet" href="/css/animations.css">
+<link rel="stylesheet" href="/css/theme.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Digital Zoo — AI Health Predictor</title>
+<link href="https://www.posters.cz/beautiful-forest-f27621934?srsltid=AfmBOopKwvcANKZwTwDxNvXDrpDP9zqB0d3zyHMcEdzjFF9iDHkpmCfB" >
+<style>
+  body {
+  background-image: url('/images/1.jpg');
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+  background-repeat: no-repeat;
+}
+  :root{--bg:#0a1a0e;--sidebar:#0d2414;--card:#0f2818;--card2:#122e1c;--gold:#c9a84c;--gold-light:#e8c86e;--cream:#f5ead5;--white:#faf7f0;--green:#2d6e3e;--muted:#8a9e8e;--danger:#c0392b;--border:rgba(201,168,76,0.15);}
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{font-family:'Crimson Pro',serif;background:var(--bg);color:var(--white);display:flex;min-height:100vh;}
+  .sidebar{width:260px;background:var(--sidebar);border-right:1px solid var(--border);display:flex;flex-direction:column;position:fixed;top:0;left:0;height:100vh;z-index:100;}
+  .sidebar-logo{padding:24px 20px;border-bottom:1px solid var(--border);}
+  .sidebar-logo h2{font-family:'Playfair Display',serif;background:linear-gradient(135deg,#c9a84c,#e8c86e);-webkit-background-clip:text;-webkit-text-fill-color:transparent;font-size:1.3rem;}
+  .sidebar-logo p{color:var(--muted);font-size:0.75rem;letter-spacing:2px;text-transform:uppercase;margin-top:2px;}
+  .nav{flex:1;padding:16px 0;overflow-y:auto;}
+  .nav-section{padding:8px 20px;color:var(--muted);font-size:0.7rem;letter-spacing:3px;text-transform:uppercase;margin-top:8px;}
+  .nav a{display:flex;align-items:center;gap:12px;padding:12px 20px;color:var(--muted);text-decoration:none;transition:all 0.2s;font-size:0.95rem;border-left:3px solid transparent;}
+  .nav a:hover,.nav a.active{color:var(--white);background:rgba(201,168,76,0.08);border-left-color:var(--gold);}
+  .nav a.active{color:var(--gold-light);}
+  .nav a .icon{width:20px;text-align:center;font-size:1.1rem;}
+  .sidebar-user{padding:16px 20px;border-top:1px solid var(--border);}
+  .user-info{display:flex;align-items:center;gap:10px;}
+  .user-avatar{width:36px;height:36px;background:linear-gradient(135deg,var(--gold),var(--green));border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:bold;color:var(--bg);}
+  .user-name{font-size:0.9rem;color:var(--cream);}
+  .user-role{font-size:0.75rem;color:var(--muted);text-transform:uppercase;}
+  .main{margin-left:260px;flex:1;padding:28px;min-height:100vh;}
+  .topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:28px;flex-wrap:wrap;gap:16px;}
+  .topbar h1{font-family:'Playfair Display',serif;font-size:1.8rem;color:var(--cream);}
+  .ai-badge{background:linear-gradient(135deg,#6c3483,#9b59b6);color:#fff;padding:6px 16px;border-radius:20px;font-size:0.8rem;letter-spacing:2px;text-transform:uppercase;}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:20px;}
+  .panel{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:24px;}
+  .panel h3{font-family:'Playfair Display',serif;color:var(--cream);margin-bottom:20px;font-size:1.15rem;}
+  .fg{margin-bottom:16px;}
+  .fg label{display:block;color:var(--gold-light);font-size:0.75rem;letter-spacing:2px;text-transform:uppercase;margin-bottom:7px;}
+  .fg select,.fg input{width:100%;background:rgba(10,26,14,0.7);border:1px solid var(--border);border-radius:10px;padding:12px 16px;color:var(--white);font-family:'Crimson Pro',serif;font-size:0.95rem;outline:none;transition:all 0.2s;}
+  .fg select:focus,.fg input:focus{border-color:var(--gold);}
+  .slider-wrap{display:flex;align-items:center;gap:12px;}
+  .slider{flex:1;-webkit-appearance:none;height:6px;border-radius:3px;background:rgba(255,255,255,0.1);outline:none;}
+  .slider::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;border-radius:50%;background:var(--gold);cursor:pointer;}
+  .slider-val{color:var(--gold-light);font-size:0.9rem;min-width:40px;text-align:right;}
+  .btn-predict{width:100%;padding:16px;background:linear-gradient(135deg,#6c3483,#9b59b6);border:none;border-radius:12px;color:#fff;font-family:'Playfair Display',serif;font-size:1.1rem;font-weight:700;cursor:pointer;transition:all 0.3s;letter-spacing:1px;margin-top:8px;}
+  .btn-predict:hover{transform:translateY(-2px);box-shadow:0 8px 25px rgba(108,52,131,0.5);}
+  /* Result */
+  .result-box{display:none;margin-top:20px;border-radius:16px;padding:24px;border:1px solid;}
+  .result-box.low{background:rgba(45,110,62,0.1);border-color:rgba(45,110,62,0.4);}
+  .result-box.medium{background:rgba(230,126,34,0.1);border-color:rgba(230,126,34,0.4);}
+  .result-box.high{background:rgba(192,57,43,0.1);border-color:rgba(192,57,43,0.4);}
+  .result-box.critical{background:rgba(192,57,43,0.2);border-color:rgba(192,57,43,0.8);}
+  .risk-score{font-family:'Playfair Display',serif;font-size:3.5rem;font-weight:900;text-align:center;margin-bottom:8px;}
+  .risk-label{text-align:center;font-size:1rem;letter-spacing:3px;text-transform:uppercase;margin-bottom:20px;}
+  .risk-bar-wrap{background:rgba(255,255,255,0.05);border-radius:8px;height:12px;overflow:hidden;margin-bottom:20px;}
+  .risk-bar{height:100%;border-radius:8px;transition:width 1.5s cubic-bezier(0.4,0,0.2,1);}
+  .factors{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;}
+  .factor{background:rgba(0,0,0,0.2);border-radius:10px;padding:12px;}
+  .factor-name{color:var(--muted);font-size:0.75rem;text-transform:uppercase;letter-spacing:1px;}
+  .factor-val{color:var(--cream);font-size:0.95rem;margin-top:3px;}
+  .factor-impact{font-size:0.75rem;margin-top:2px;}
+  .impact-pos{color:#7eff90;}
+  .impact-neg{color:#ff7070;}
+  .recommendations{margin-top:16px;}
+  .recommendations h4{color:var(--gold-light);font-size:0.85rem;letter-spacing:2px;text-transform:uppercase;margin-bottom:10px;}
+  .rec-item{display:flex;gap:10px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.05);font-size:0.9rem;color:var(--cream);}
+  .rec-item:last-child{border-bottom:none;}
+  /* History */
+  .history-item{display:flex;align-items:center;gap:14px;padding:12px;background:var(--card2);border-radius:10px;margin-bottom:10px;border:1px solid var(--border);}
+  .risk-dot{width:12px;height:12px;border-radius:50%;flex-shrink:0;}
+  .risk-dot.low{background:#2d6e3e;}
+  .risk-dot.medium{background:#e67e22;}
+  .risk-dot.high{background:#c0392b;}
+  .risk-dot.critical{background:#ff0000;animation:blink 0.8s ease-in-out infinite alternate;}
+  @keyframes blink{0%{opacity:1;}100%{opacity:0.3;}}
+  .history-info{flex:1;}
+  .history-name{color:var(--cream);font-size:0.9rem;}
+  .history-time{color:var(--muted);font-size:0.75rem;}
+  .history-score{font-family:'Playfair Display',serif;font-size:1.2rem;color:var(--gold-light);}
+  .ai-thinking{display:none;text-align:center;padding:30px;}
+  .ai-thinking .brain{font-size:3rem;animation:think 0.6s ease-in-out infinite alternate;}
+  @keyframes think{0%{transform:scale(1) rotate(-5deg);}100%{transform:scale(1.1) rotate(5deg);}}
+  .ai-thinking p{color:var(--muted);margin-top:12px;font-size:0.9rem;}
+  .dots::after{content:'...';animation:dots 1.5s steps(4,end) infinite;}
+  @keyframes dots{0%,20%{content:'.';}40%{content:'..';}60%,100%{content:'...';}}
+  .audio-bar{display:none;margin-top:16px;background:rgba(13,36,20,0.8);border:1px solid rgba(201,168,76,0.25);border-radius:12px;padding:14px 18px;}
+  .audio-bar.show{display:block;}
+  .audio-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
+  .audio-title{color:var(--gold-light);font-size:0.82rem;letter-spacing:2px;text-transform:uppercase;display:flex;align-items:center;gap:8px;}
+  .audio-controls{display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
+  .aud-btn{background:rgba(201,168,76,0.15);border:1px solid rgba(201,168,76,0.3);color:var(--gold-light);padding:7px 16px;border-radius:20px;cursor:pointer;font-family:'Crimson Pro',serif;font-size:0.85rem;transition:all 0.2s;display:flex;align-items:center;gap:6px;}
+  .aud-btn:hover{background:rgba(201,168,76,0.3);}
+  .aud-btn.playing{background:rgba(192,57,43,0.2);border-color:rgba(192,57,43,0.5);color:#ff9090;}
+  .aud-btn:disabled{opacity:0.4;cursor:not-allowed;}
+  .voice-select{background:rgba(10,26,14,0.8);border:1px solid var(--border);border-radius:8px;padding:6px 10px;color:var(--white);font-family:'Crimson Pro',serif;font-size:0.82rem;outline:none;}
+  .audio-wave{display:flex;align-items:center;gap:3px;height:28px;margin:0 8px;}
+  .wave-bar{width:4px;border-radius:2px;background:var(--gold);transform-origin:bottom;}
+  .wave-bar.active{animation:wave 0.6s ease-in-out infinite alternate;}
+  @keyframes wave{0%{height:4px;opacity:0.4;}100%{height:22px;opacity:1;}}
+  .audio-transcript{color:var(--cream);font-size:0.88rem;line-height:1.7;padding:10px 14px;background:rgba(0,0,0,0.2);border-radius:8px;border-left:3px solid var(--gold);font-style:italic;max-height:120px;overflow-y:auto;margin-top:10px;}
+</style>
+</head>
+<body>
+<aside class="sidebar">
+  <div class="sidebar-logo"><h2>🦁 DIGITAL ZOO</h2><p>Admin System</p></div>
+  <nav class="nav">
+    <div class="nav-section">Main</div>
+    <a href="/dashboard"><span class="icon">📊</span> Dashboard</a>
+    <a href="/animals"><span class="icon">🐾</span> Animals</a>
+    <a href="/adoptions"><span class="icon">🤝</span> Adoptions</a>
+    <a href="/medications"><span class="icon">💊</span> Medical Records</a>
+    <div class="nav-section">Unique Features</div>
+    <a href="/ai-health" class="active"><span class="icon">🤖</span> AI Health Predictor</a>
+    <a href="/zoo-map"><span class="icon">🗺️</span> Zoo Map</a>
+    <a href="/leaderboard"><span class="icon">🏆</span> Leaderboard</a>
+    <a href="/simulation"><span class="icon">🎮</span> Zoo Simulation</a>
+    <a href="/qr-codes"><span class="icon">📱</span> QR Codes</a>
+    <a href="/world-map"><span class="icon">🌍</span> Origin Map</a>
+    <a href="/birthdays"><span class="icon">🎂</span> Birthdays</a>
+    <a href="/activity-monitor"><span class="icon">⚡</span> Activity Monitor</a>
+    <div class="nav-section">Management</div>
+    <a href="/reports"><span class="icon">📈</span> Reports</a>
+  </nav>
+  <div class="sidebar-user">
+    <div class="user-info">
+      <div class="user-avatar" id="userAvatar">A</div>
+      <div><div class="user-name" id="userName">Loading...</div><div class="user-role" id="userRole">---</div></div>
+    </div>
+  </div>
+</aside>
+
+<main class="main">
+  <div class="topbar">
+    <div>
+      <h1>🤖 AI Health Predictor</h1>
+      <p style="color:var(--muted);font-size:0.9rem;margin-top:4px">Predicts animal health risk using behavioral & medical data</p>
+    </div>
+    <div class="ai-badge">⚡ AI Powered</div>
+  </div>
+
+  <div class="grid2">
+    <!-- Input Form -->
+    <div class="panel">
+      <h3>📋 Animal Health Data Input</h3>
+      <div class="fg">
+        <label>Select Animal</label>
+        <select id="animalSelect" onchange="loadAnimalData()">
+          <option value="">Choose an animal...</option>
+        </select>
+      </div>
+      <div class="fg">
+        <label>Current Health Status</label>
+        <select id="healthStatus">
+          <option value="healthy">Healthy</option>
+          <option value="sick">Sick</option>
+          <option value="recovering">Recovering</option>
+          <option value="critical">Critical</option>
+        </select>
+      </div>
+      <div class="fg">
+        <label>Days Since Last Vet Visit</label>
+        <div class="slider-wrap">
+          <input type="range" class="slider" id="vetDays" min="0" max="365" value="30" oninput="document.getElementById('vetDaysVal').textContent=this.value">
+          <span class="slider-val" id="vetDaysVal">30</span>
+        </div>
+      </div>
+      <div class="fg">
+        <label>Appetite Level (1=None, 10=Excellent)</label>
+        <div class="slider-wrap">
+          <input type="range" class="slider" id="appetite" min="1" max="10" value="8" oninput="document.getElementById('appetiteVal').textContent=this.value">
+          <span class="slider-val" id="appetiteVal">8</span>
+        </div>
+      </div>
+      <div class="fg">
+        <label>Activity Level (1=Lethargic, 10=Very Active)</label>
+        <div class="slider-wrap">
+          <input type="range" class="slider" id="activity" min="1" max="10" value="7" oninput="document.getElementById('activityVal').textContent=this.value">
+          <span class="slider-val" id="activityVal">7</span>
+        </div>
+      </div>
+      <div class="fg">
+        <label>Active Medications Count</label>
+        <div class="slider-wrap">
+          <input type="range" class="slider" id="medCount" min="0" max="10" value="0" oninput="document.getElementById('medCountVal').textContent=this.value">
+          <span class="slider-val" id="medCountVal">0</span>
+        </div>
+      </div>
+      <div class="fg">
+        <label>Age (years)</label>
+        <div class="slider-wrap">
+          <input type="range" class="slider" id="ageInput" min="0" max="50" value="5" oninput="document.getElementById('ageVal').textContent=this.value">
+          <span class="slider-val" id="ageVal">5</span>
+        </div>
+      </div>
+      <div class="fg">
+        <label>Is Endangered Species?</label>
+        <select id="isEndangered">
+          <option value="0">No</option>
+          <option value="1">Yes</option>
+        </select>
+      </div>
+      <button class="btn-predict" onclick="runPrediction()">🤖 Run AI Prediction</button>
+
+      <!-- Thinking animation -->
+      <div class="ai-thinking" id="aiThinking">
+        <div class="brain">🧠</div>
+        <p>AI is analyzing health data<span class="dots"></span></p>
+      </div>
+
+      <!-- Result -->
+      <div class="result-box" id="resultBox">
+        <div class="risk-score" id="riskScore">0%</div>
+        <div class="risk-label" id="riskLabel">Low Risk</div>
+        <div class="risk-bar-wrap"><div class="risk-bar" id="riskBar" style="width:0%"></div></div>
+        <div class="factors" id="factorsGrid"></div>
+        <div class="recommendations" id="recommendations"></div>
+      </div>
+
+      <!-- Audio Output Panel -->
+      <div class="audio-bar" id="audioBar">
+        <div class="audio-top">
+          <div class="audio-title">
+            🔊 Audio Report
+          </div>
+          <div class="audio-controls">
+            <select class="voice-select" id="voiceSelect" title="Select voice"></select>
+            <div class="audio-wave" id="audioWave">
+              <div class="wave-bar" style="animation-delay:0s"></div>
+              <div class="wave-bar" style="animation-delay:0.1s"></div>
+              <div class="wave-bar" style="animation-delay:0.2s"></div>
+              <div class="wave-bar" style="animation-delay:0.15s"></div>
+              <div class="wave-bar" style="animation-delay:0.05s"></div>
+              <div class="wave-bar" style="animation-delay:0.25s"></div>
+              <div class="wave-bar" style="animation-delay:0.1s"></div>
+            </div>
+            <button class="aud-btn" id="playBtn" onclick="speakReport()">▶ Play Report</button>
+            <button class="aud-btn" id="stopBtn" onclick="stopSpeech()" style="display:none">⏹ Stop</button>
+            <button class="aud-btn" onclick="replaySpeech()">↻ Replay</button>
+          </div>
+        </div>
+        <div class="audio-transcript" id="audioTranscript"></div>
+      </div>
+    </div>
+
+    <!-- Prediction History -->
+    <div class="panel">
+      <h3>📊 Recent Predictions</h3>
+      <div id="historyList"><div style="color:var(--muted);text-align:center;padding:40px">Run a prediction to see history</div></div>
+
+      <!-- Risk Guide -->
+      <div style="margin-top:24px;padding:16px;background:rgba(0,0,0,0.2);border-radius:12px;">
+        <h4 style="color:var(--gold-light);font-size:0.8rem;letter-spacing:2px;text-transform:uppercase;margin-bottom:12px">Risk Level Guide</h4>
+        <div style="display:flex;flex-direction:column;gap:8px;">
+          <div style="display:flex;align-items:center;gap:10px"><div style="width:12px;height:12px;border-radius:50%;background:#2d6e3e"></div><span style="color:var(--cream);font-size:0.85rem">0–25% — Low Risk (Healthy, routine care)</span></div>
+          <div style="display:flex;align-items:center;gap:10px"><div style="width:12px;height:12px;border-radius:50%;background:#e67e22"></div><span style="color:var(--cream);font-size:0.85rem">26–50% — Medium Risk (Monitor closely)</span></div>
+          <div style="display:flex;align-items:center;gap:10px"><div style="width:12px;height:12px;border-radius:50%;background:#c0392b"></div><span style="color:var(--cream);font-size:0.85rem">51–75% — High Risk (Vet visit needed)</span></div>
+          <div style="display:flex;align-items:center;gap:10px"><div style="width:12px;height:12px;border-radius:50%;background:#ff0000"></div><span style="color:var(--cream);font-size:0.85rem">76–100% — Critical (Immediate action!)</span></div>
+        </div>
+      </div>
+
+      <!-- Stats -->
+      <div style="margin-top:20px;display:grid;grid-template-columns:1fr 1fr;gap:12px;" id="predStats">
+        <div style="background:var(--card2);border-radius:12px;padding:14px;text-align:center;border:1px solid var(--border)">
+          <div style="font-family:'Playfair Display',serif;font-size:2rem;color:var(--gold-light)" id="totalPreds">0</div>
+          <div style="color:var(--muted);font-size:0.75rem;text-transform:uppercase;letter-spacing:1px">Predictions Run</div>
+        </div>
+        <div style="background:var(--card2);border-radius:12px;padding:14px;text-align:center;border:1px solid var(--border)">
+          <div style="font-family:'Playfair Display',serif;font-size:2rem;color:#ff7070" id="highRiskCount">0</div>
+          <div style="color:var(--muted);font-size:0.75rem;text-transform:uppercase;letter-spacing:1px">High Risk Found</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<script>
+var token = localStorage.getItem('token');
+var user  = JSON.parse(localStorage.getItem('user') || '{}');
+if (!token) window.location.href = '/login';
+document.getElementById('userName').textContent  = user.name || 'Staff';
+document.getElementById('userRole').textContent  = user.role || 'staff';
+document.getElementById('userAvatar').textContent = (user.name || 'A')[0].toUpperCase();
+
+var predHistory = [];
+
+// Load animals
+fetch('/api/animals?limit=100', { headers: { 'Authorization': 'Bearer ' + token } })
+  .then(function(r){ return r.json(); })
+  .then(function(d){
+    var sel = document.getElementById('animalSelect');
+    (d.data || []).forEach(function(a){
+      var opt = document.createElement('option');
+      opt.value = a.id;
+      opt.textContent = a.name + ' (' + a.species + ')';
+      opt.dataset.health = a.health_status;
+      opt.dataset.age    = a.age || 5;
+      opt.dataset.endangered = a.is_endangered ? '1' : '0';
+      sel.appendChild(opt);
+    });
+  });
+
+function loadAnimalData() {
+  var sel = document.getElementById('animalSelect');
+  var opt = sel.options[sel.selectedIndex];
+  if (!opt || !opt.value) return;
+  document.getElementById('healthStatus').value = opt.dataset.health || 'healthy';
+  document.getElementById('ageInput').value     = Math.min(50, parseInt(opt.dataset.age) || 5);
+  document.getElementById('ageVal').textContent = document.getElementById('ageInput').value;
+  document.getElementById('isEndangered').value = opt.dataset.endangered || '0';
+}
+
+function runPrediction() {
+  var animalSel = document.getElementById('animalSelect');
+  if (!animalSel.value) { alert('Please select an animal first'); return; }
+
+  // Show thinking
+  document.getElementById('aiThinking').style.display = 'block';
+  document.getElementById('resultBox').style.display  = 'none';
+
+  // Simulate AI processing delay
+  setTimeout(function(){
+    document.getElementById('aiThinking').style.display = 'none';
+    calculateRisk();
+  }, 2200);
+}
+
+function calculateRisk() {
+  var health     = document.getElementById('healthStatus').value;
+  var vetDays    = parseInt(document.getElementById('vetDays').value);
+  var appetite   = parseInt(document.getElementById('appetite').value);
+  var activity   = parseInt(document.getElementById('activity').value);
+  var medCount   = parseInt(document.getElementById('medCount').value);
+  var age        = parseInt(document.getElementById('ageInput').value);
+  var endangered = document.getElementById('isEndangered').value === '1';
+
+  // AI scoring algorithm
+  var score = 0;
+
+  // Health status base score
+  var healthScores = { healthy: 5, recovering: 35, sick: 60, critical: 85 };
+  score += healthScores[health] || 5;
+
+  // Vet visit recency
+  if (vetDays > 180) score += 20;
+  else if (vetDays > 90)  score += 12;
+  else if (vetDays > 30)  score += 5;
+
+  // Appetite (inverse)
+  score += (10 - appetite) * 3;
+
+  // Activity (inverse)
+  score += (10 - activity) * 2;
+
+  // Medications
+  score += medCount * 5;
+
+  // Age factor
+  if (age > 20) score += 15;
+  else if (age > 10) score += 8;
+  else if (age < 1)  score += 10;
+
+  // Endangered species extra risk
+  if (endangered) score += 8;
+
+  // Cap at 100
+  score = Math.min(100, Math.max(0, Math.round(score)));
+
+  // Determine risk level
+  var level, color, barColor;
+  if (score <= 25)      { level = 'LOW RISK';      color = 'low';      barColor = '#2d6e3e'; }
+  else if (score <= 50) { level = 'MEDIUM RISK';   color = 'medium';   barColor = '#e67e22'; }
+  else if (score <= 75) { level = 'HIGH RISK';     color = 'high';     barColor = '#c0392b'; }
+  else                  { level = 'CRITICAL RISK'; color = 'critical'; barColor = '#ff0000'; }
+
+  // Build factors
+  var factors = [
+    { name: 'Health Status', val: health, impact: health === 'healthy' ? 'pos' : 'neg', note: health === 'healthy' ? '✓ Good' : '⚠ Concern' },
+    { name: 'Appetite',      val: appetite + '/10', impact: appetite >= 7 ? 'pos' : 'neg', note: appetite >= 7 ? '✓ Normal' : '↓ Low' },
+    { name: 'Activity',      val: activity + '/10', impact: activity >= 6 ? 'pos' : 'neg', note: activity >= 6 ? '✓ Active' : '↓ Lethargic' },
+    { name: 'Last Vet Visit',val: vetDays + ' days', impact: vetDays <= 30 ? 'pos' : 'neg', note: vetDays <= 30 ? '✓ Recent' : '⚠ Overdue' },
+    { name: 'Medications',   val: medCount + ' active', impact: medCount === 0 ? 'pos' : 'neg', note: medCount === 0 ? '✓ None' : '⚠ On meds' },
+    { name: 'Age Factor',    val: age + ' yrs', impact: (age > 1 && age < 15) ? 'pos' : 'neg', note: (age > 1 && age < 15) ? '✓ Prime age' : '⚠ Age risk' }
+  ];
+
+  // Recommendations
+  var recs = [];
+  if (vetDays > 30)    recs.push({ icon: '🩺', text: 'Schedule a vet checkup — ' + vetDays + ' days since last visit' });
+  if (appetite < 6)    recs.push({ icon: '🍖', text: 'Monitor food intake closely, appetite is below normal' });
+  if (activity < 5)    recs.push({ icon: '🏃', text: 'Low activity detected — observe for signs of illness' });
+  if (medCount > 2)    recs.push({ icon: '💊', text: 'Multiple medications — watch for drug interactions' });
+  if (endangered)      recs.push({ icon: '🌿', text: 'Endangered species — enhanced monitoring recommended' });
+  if (score <= 25)     recs.push({ icon: '✅', text: 'Animal appears healthy — maintain current care routine' });
+  if (score > 75)      recs.push({ icon: '🚨', text: 'URGENT: Immediate veterinary attention required!' });
+
+  // Show result
+  var box = document.getElementById('resultBox');
+  box.className = 'result-box ' + color;
+  box.style.display = 'block';
+
+  document.getElementById('riskScore').textContent = score + '%';
+  document.getElementById('riskScore').style.color = barColor;
+  document.getElementById('riskLabel').textContent = level;
+  document.getElementById('riskLabel').style.color = barColor;
+
+  var bar = document.getElementById('riskBar');
+  bar.style.width = '0%';
+  bar.style.background = barColor;
+  setTimeout(function(){ bar.style.width = score + '%'; }, 50);
+
+  document.getElementById('factorsGrid').innerHTML = factors.map(function(f){
+    return '<div class="factor">' +
+      '<div class="factor-name">' + f.name + '</div>' +
+      '<div class="factor-val">' + f.val + '</div>' +
+      '<div class="factor-impact impact-' + f.impact + '">' + f.note + '</div>' +
+    '</div>';
+  }).join('');
+
+  document.getElementById('recommendations').innerHTML =
+    '<h4>💡 Recommendations</h4>' +
+    recs.map(function(r){
+      return '<div class="rec-item"><span>' + r.icon + '</span><span>' + r.text + '</span></div>';
+    }).join('');
+
+  // Build and display audio report
+  var animalName = document.getElementById('animalSelect').options[document.getElementById('animalSelect').selectedIndex].text;
+  reportText = buildReportText(animalName, score, level, health, appetite, activity, vetDays, medCount, recs);
+  document.getElementById('audioTranscript').textContent = reportText;
+  document.getElementById('audioBar').classList.add('show');
+
+  // Auto-speak after short delay (let UI render first)
+  setTimeout(function(){
+    loadVoices();
+    speakReport();
+  }, 600);
+
+  // Save to history
+  predHistory.unshift({ name: animalName, score: score, level: color, time: new Date().toLocaleTimeString('en-IN') });
+  if (predHistory.length > 10) predHistory.pop();
+  renderHistory();
+}
+
+// ── AUDIO / TEXT-TO-SPEECH ENGINE ──────────────────────────────
+var currentUtterance = null;
+var reportText       = '';
+var isSpeaking       = false;
+var voices           = [];
+
+// Load available voices
+function loadVoices() {
+  voices = window.speechSynthesis.getVoices();
+  var sel = document.getElementById('voiceSelect');
+  if (!sel || !voices.length) return;
+  sel.innerHTML = '';
+  // Prefer English voices
+  var engVoices = voices.filter(function(v){ return v.lang.startsWith('en'); });
+  var list = engVoices.length ? engVoices : voices;
+  list.forEach(function(v, i){
+    var opt = document.createElement('option');
+    opt.value = i;
+    opt.textContent = v.name + ' (' + v.lang + ')';
+    // Prefer female or natural voices
+    if (v.name.toLowerCase().includes('female') || v.name.toLowerCase().includes('samantha') ||
+        v.name.toLowerCase().includes('karen') || v.name.toLowerCase().includes('zira') ||
+        v.name.toLowerCase().includes('natural')) {
+      opt.selected = true;
+    }
+    sel.appendChild(opt);
+  });
+}
+
+window.speechSynthesis.onvoiceschanged = loadVoices;
+loadVoices();
+
+// Build the spoken report from prediction results
+function buildReportText(animalName, score, level, health, appetite, activity, vetDays, medCount, recs) {
+  var urgency = score > 75 ? 'URGENT. ' : score > 50 ? 'Warning. ' : score > 25 ? 'Advisory. ' : '';
+  var intro   = urgency + 'AI Health Prediction Report for ' + animalName + '. ';
+  var result  = 'Risk Score: ' + score + ' percent. Status: ' + level + '. ';
+  var details = 'Current health status is ' + health + '. ';
+  details    += 'Appetite level is ' + appetite + ' out of 10. ';
+  details    += 'Activity level is ' + activity + ' out of 10. ';
+  details    += 'Days since last vet visit: ' + vetDays + '. ';
+  details    += 'Active medications: ' + medCount + '. ';
+  var recText = '';
+  if (recs.length) {
+    recText = 'Recommendations: ';
+    recs.forEach(function(r, i){ recText += (i+1) + '. ' + r.text + '. '; });
+  }
+  var closing = score > 75 ? 'Immediate veterinary attention is required.' :
+                score > 50 ? 'Please schedule a vet visit as soon as possible.' :
+                score > 25 ? 'Monitor this animal closely over the next few days.' :
+                'Animal appears healthy. Continue routine care.';
+  return intro + result + details + recText + closing;
+}
+
+function speakReport() {
+  if (!reportText) { showToast('Run a prediction first', 'error'); return; }
+  if (!('speechSynthesis' in window)) {
+    showToast('Your browser does not support text-to-speech', 'error'); return;
+  }
+  stopSpeech();
+
+  var sel   = document.getElementById('voiceSelect');
+  var voice = null;
+  if (sel && sel.value !== '' && voices.length) {
+    voice = voices[parseInt(sel.value)] || null;
+  }
+
+  var utterance  = new SpeechSynthesisUtterance(reportText);
+  utterance.rate  = 0.92;
+  utterance.pitch = 1.05;
+  utterance.volume = 1;
+  if (voice) utterance.voice = voice;
+
+  // Show transcript
+  document.getElementById('audioTranscript').textContent = reportText;
+
+  // Wave animation
+  utterance.onstart = function() {
+    isSpeaking = true;
+    document.getElementById('playBtn').style.display = 'none';
+    document.getElementById('stopBtn').style.display = 'flex';
+    document.querySelectorAll('.wave-bar').forEach(function(b, i){
+      b.classList.add('active');
+      b.style.animationDelay = (i * 0.08) + 's';
+    });
+  };
+  utterance.onend = function() {
+    isSpeaking = false;
+    document.getElementById('playBtn').style.display = 'flex';
+    document.getElementById('stopBtn').style.display = 'none';
+    document.querySelectorAll('.wave-bar').forEach(function(b){ b.classList.remove('active'); b.style.height = '4px'; });
+  };
+  utterance.onerror = function() {
+    isSpeaking = false;
+    document.getElementById('playBtn').style.display = 'flex';
+    document.getElementById('stopBtn').style.display = 'none';
+    document.querySelectorAll('.wave-bar').forEach(function(b){ b.classList.remove('active'); });
+    showToast('Speech error — try a different voice', 'error');
+  };
+
+  currentUtterance = utterance;
+  window.speechSynthesis.speak(utterance);
+}
+
+function stopSpeech() {
+  window.speechSynthesis.cancel();
+  isSpeaking = false;
+  document.getElementById('playBtn').style.display = 'flex';
+  document.getElementById('stopBtn').style.display = 'none';
+  document.querySelectorAll('.wave-bar').forEach(function(b){ b.classList.remove('active'); });
+}
+
+function replaySpeech() {
+  stopSpeech();
+  setTimeout(speakReport, 200);
+}
+
+function renderHistory() {
+  var hl = document.getElementById('historyList');
+  if (!predHistory.length) { hl.innerHTML = '<div style="color:var(--muted);text-align:center;padding:40px">No predictions yet</div>'; return; }
+  hl.innerHTML = predHistory.map(function(p){
+    return '<div class="history-item">' +
+      '<div class="risk-dot ' + p.level + '"></div>' +
+      '<div class="history-info"><div class="history-name">' + p.name + '</div><div class="history-time">' + p.time + '</div></div>' +
+      '<div class="history-score">' + p.score + '%</div>' +
+    '</div>';
+  }).join('');
+
+  document.getElementById('totalPreds').textContent = predHistory.length;
+  document.getElementById('highRiskCount').textContent = predHistory.filter(function(p){ return p.level === 'high' || p.level === 'critical'; }).length;
+}
+</script>
+</body>
+</html>

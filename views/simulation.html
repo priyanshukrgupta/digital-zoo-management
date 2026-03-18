@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <link rel="stylesheet" href="/css/jungle.css">
+<link rel="stylesheet" href="/css/animations.css">
+<link rel="stylesheet" href="/css/theme.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Digital Zoo — Live Zone View</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Crimson+Pro:wght@300;400;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0a1a0e;--sidebar:#0d2414;--card:#0f2818;--card2:#122e1c;
+    --gold:#c9a84c;--gold-light:#e8c86e;--cream:#f5ead5;--white:#faf7f0;
+    --green:#2d6e3e;--muted:#8a9e8e;--border:rgba(201,168,76,0.15);
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{font-family:'Crimson Pro',serif;background:var(--bg);color:var(--white);display:flex;min-height:100vh;}
+
+  /* Sidebar */
+  .sidebar{width:260px;background:var(--sidebar);border-right:1px solid var(--border);display:flex;flex-direction:column;position:fixed;top:0;left:0;height:100vh;z-index:100;}
+  .sidebar-logo{padding:24px 20px;border-bottom:1px solid var(--border);}
+  .sidebar-logo h2{font-family:'Playfair Display',serif;background:linear-gradient(135deg,#c9a84c,#e8c86e);-webkit-background-clip:text;-webkit-text-fill-color:transparent;font-size:1.3rem;}
+  .sidebar-logo p{color:var(--muted);font-size:0.75rem;letter-spacing:2px;text-transform:uppercase;margin-top:2px;}
+  .nav{flex:1;padding:16px 0;overflow-y:auto;}
+  .nav-section{padding:8px 20px;color:var(--muted);font-size:0.7rem;letter-spacing:3px;text-transform:uppercase;margin-top:8px;}
+  .nav a{display:flex;align-items:center;gap:12px;padding:12px 20px;color:var(--muted);text-decoration:none;transition:all 0.2s;font-size:0.95rem;border-left:3px solid transparent;}
+  .nav a:hover,.nav a.active{color:var(--white);background:rgba(201,168,76,0.08);border-left-color:var(--gold);}
+  .nav a.active{color:var(--gold-light);}
+  .nav a .icon{width:20px;text-align:center;font-size:1.1rem;}
+  .sidebar-user{padding:16px 20px;border-top:1px solid var(--border);}
+  .user-info{display:flex;align-items:center;gap:10px;}
+  .user-avatar{width:36px;height:36px;background:linear-gradient(135deg,var(--gold),var(--green));border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:bold;color:var(--bg);}
+  .user-name{font-size:0.9rem;color:var(--cream);}
+  .user-role{font-size:0.75rem;color:var(--muted);text-transform:uppercase;}
+
+  /* Main */
+  .main{margin-left:260px;flex:1;padding:24px;min-height:100vh;}
+  .topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:12px;}
+  .topbar h1{font-family:'Playfair Display',serif;font-size:1.8rem;color:var(--cream);}
+  .topbar p{color:var(--muted);font-size:0.88rem;margin-top:3px;}
+  .live-badge{display:flex;align-items:center;gap:7px;background:rgba(192,57,43,0.15);border:1px solid rgba(192,57,43,0.4);color:#ff7070;padding:7px 16px;border-radius:20px;font-size:0.82rem;}
+  .live-dot{width:7px;height:7px;border-radius:50%;background:#ff4444;animation:pulse 1s ease-in-out infinite alternate;}
+  @keyframes pulse{0%{box-shadow:0 0 3px rgba(255,68,68,0.5);}100%{box-shadow:0 0 10px rgba(255,68,68,1);}}
+
+  /* Zone grid */
+  .zones-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-bottom:24px;}
+
+  /* Individual zone card */
+  .zone-card{background:var(--card);border:1px solid var(--border);border-radius:16px;overflow:hidden;position:relative;transition:all 0.3s;}
+  .zone-card:hover{border-color:rgba(201,168,76,0.3);box-shadow:0 8px 24px rgba(0,0,0,0.4);}
+  .zone-card.fullscreen-zone{position:fixed;top:0;left:0;width:100vw;height:100vh;z-index:999;border-radius:0;margin:0;}
+
+  /* Video area */
+  .zone-video-wrap{position:relative;width:100%;aspect-ratio:16/9;background:#000;overflow:hidden;}
+  .zone-video-wrap video{width:100%;height:100%;object-fit:cover;display:block;}
+
+  /* Placeholder when no video */
+  .zone-placeholder{width:100%;aspect-ratio:16/9;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;transition:all 0.3s;position:relative;overflow:hidden;}
+  .zone-placeholder::before{content:'';position:absolute;inset:0;opacity:0.06;background-size:cover;}
+  .zone-placeholder:hover{opacity:0.9;}
+  .ph-emoji{font-size:3.5rem;margin-bottom:10px;filter:drop-shadow(0 4px 8px rgba(0,0,0,0.5));}
+  .ph-text{color:rgba(255,255,255,0.6);font-size:0.85rem;text-align:center;line-height:1.5;}
+  .ph-upload-hint{margin-top:10px;background:rgba(201,168,76,0.2);border:1px solid rgba(201,168,76,0.4);color:var(--gold-light);padding:6px 16px;border-radius:20px;font-size:0.78rem;letter-spacing:1px;}
+
+  /* Upload overlay on hover */
+  .upload-overlay{position:absolute;inset:0;background:rgba(0,0,0,0.65);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;opacity:0;transition:opacity 0.2s;cursor:pointer;}
+  .zone-video-wrap:hover .upload-overlay{opacity:1;}
+  .upload-overlay span{color:#fff;font-size:0.85rem;}
+  .upload-overlay .uo-btn{background:rgba(201,168,76,0.9);color:#0a1a0e;padding:8px 20px;border-radius:20px;font-size:0.82rem;font-weight:600;}
+
+  /* Zone info bar */
+  .zone-info{padding:12px 16px;}
+  .zone-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;}
+  .zone-name{font-family:'Playfair Display',serif;color:var(--cream);font-size:1rem;}
+  .zone-actions{display:flex;gap:6px;}
+  .z-btn{background:none;border:1px solid var(--border);color:var(--muted);width:28px;height:28px;border-radius:6px;cursor:pointer;font-size:0.82rem;transition:all 0.2s;display:flex;align-items:center;justify-content:center;}
+  .z-btn:hover{border-color:var(--gold);color:var(--gold);}
+  .zone-animals{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:6px;}
+  .zone-animal-tag{display:flex;align-items:center;gap:4px;background:rgba(255,255,255,0.05);border:1px solid var(--border);border-radius:16px;padding:3px 9px;font-size:0.75rem;color:var(--cream);cursor:pointer;text-decoration:none;transition:all 0.2s;}
+  .zone-animal-tag:hover{background:rgba(201,168,76,0.1);border-color:rgba(201,168,76,0.3);}
+  .zone-status{font-size:0.75rem;color:var(--muted);}
+  .status-dot{display:inline-block;width:6px;height:6px;border-radius:50%;margin-right:4px;}
+  .has-video .status-dot{background:#2d9e5a;}
+  .no-video  .status-dot{background:#8a9e8e;}
+
+  /* Hidden file input */
+  .file-input{display:none;}
+
+  /* Focused/fullscreen zone */
+  .focused-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.9);z-index:998;display:none;align-items:center;justify-content:center;}
+  .focused-overlay.open{display:flex;}
+  .focused-inner{position:relative;width:90vw;max-width:1100px;}
+  .focused-inner video{width:100%;border-radius:16px;max-height:80vh;}
+  .focused-close{position:absolute;top:-40px;right:0;background:none;border:none;color:#fff;font-size:1.8rem;cursor:pointer;opacity:0.7;transition:opacity 0.2s;}
+  .focused-close:hover{opacity:1;}
+  .focused-info{margin-top:14px;display:flex;justify-content:space-between;align-items:center;}
+  .focused-title{font-family:'Playfair Display',serif;color:var(--gold-light);font-size:1.3rem;}
+  .focused-animals{display:flex;gap:8px;flex-wrap:wrap;}
+
+  /* Upload progress */
+  .upload-progress{position:absolute;bottom:0;left:0;right:0;height:3px;background:rgba(255,255,255,0.1);}
+  .upload-bar{height:100%;background:var(--gold);width:0%;transition:width 0.3s;border-radius:0 3px 3px 0;}
+
+  /* Toast */
+  .toast{position:fixed;bottom:28px;right:28px;background:rgba(45,110,62,0.92);border:1px solid rgba(45,110,62,0.6);color:#fff;padding:13px 22px;border-radius:12px;z-index:9999;transition:all 0.3s;transform:translateY(100px);opacity:0;}
+  .toast.show{transform:translateY(0);opacity:1;}
+  .toast.error{background:rgba(192,57,43,0.92);}
+
+  /* Animal list below */
+  .animals-section{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:20px;}
+  .animals-section h3{font-family:'Playfair Display',serif;color:var(--cream);margin-bottom:14px;font-size:1.1rem;}
+  .animals-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;}
+  .animal-chip{display:flex;align-items:center;gap:8px;padding:8px 12px;background:var(--card2);border:1px solid var(--border);border-radius:10px;cursor:pointer;text-decoration:none;transition:all 0.2s;}
+  .animal-chip:hover{border-color:rgba(201,168,76,0.3);transform:translateY(-1px);}
+  .chip-emoji{font-size:1.2rem;}
+  .chip-name{color:var(--cream);font-size:0.82rem;font-weight:600;}
+  .chip-zone{font-size:0.68rem;color:var(--muted);}
+  .chip-health{width:6px;height:6px;border-radius:50%;flex-shrink:0;margin-left:auto;}
+</style>
+</head>
+<body>
+<aside class="sidebar">
+  <div class="sidebar-logo"><h2>🦁 DIGITAL ZOO</h2><p>Admin System</p></div>
+  <nav class="nav">
+    <div class="nav-section">Main</div>
+    <a href="/dashboard"><span class="icon">📊</span> Dashboard</a>
+    <a href="/animals"><span class="icon">🐾</span> Animals</a>
+    <a href="/adoptions"><span class="icon">🤝</span> Adoptions</a>
+    <a href="/medications"><span class="icon">💊</span> Medical Records</a>
+    <div class="nav-section">Unique Features</div>
+    <a href="/ai-health"><span class="icon">🤖</span> AI Health Predictor</a>
+    <a href="/zoo-map"><span class="icon">🗺️</span> Zoo Map</a>
+    <a href="/leaderboard"><span class="icon">🏆</span> Leaderboard</a>
+    <a href="/simulation" class="active"><span class="icon">🎮</span> Zoo Live View</a>
+    <a href="/qr-codes"><span class="icon">📱</span> QR Codes</a>
+    <a href="/world-map"><span class="icon">🌍</span> Origin Map</a>
+    <a href="/birthdays"><span class="icon">🎂</span> Birthdays</a>
+    <a href="/activity-monitor"><span class="icon">⚡</span> Activity Monitor</a>
+    <div class="nav-section">Management</div>
+    <a href="/reports"><span class="icon">📈</span> Reports</a>
+  </nav>
+  <div class="sidebar-user">
+    <div class="user-info">
+      <div class="user-avatar" id="userAvatar">A</div>
+      <div><div class="user-name" id="userName">Loading...</div><div class="user-role" id="userRole">---</div></div>
+    </div>
+  </div>
+</aside>
+
+<main class="main">
+  <div class="topbar">
+    <div>
+      <h1>🎬 Zoo Live Zone View</h1>
+      <p>Upload real videos for each zone — click any zone to go fullscreen</p>
+    </div>
+    <div class="live-badge"><div class="live-dot"></div> LIVE ZONES</div>
+  </div>
+
+  <!-- Zone grid -->
+  <div class="zones-grid" id="zonesGrid"></div>
+
+  <!-- Animals list -->
+  <div class="animals-section">
+    <h3>🐾 All Animals by Zone</h3>
+    <div class="animals-grid" id="animalsGrid"></div>
+  </div>
+</main>
+
+<!-- Fullscreen focused view -->
+<div class="focused-overlay" id="focusedOverlay">
+  <div class="focused-inner">
+    <button class="focused-close" onclick="closeFocused()">×</button>
+    <video id="focusedVideo" controls autoplay loop muted style="width:100%;border-radius:16px;max-height:80vh;background:#000;"></video>
+    <div class="focused-info">
+      <div class="focused-title" id="focusedTitle"></div>
+      <div class="focused-animals" id="focusedAnimals"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Hidden file inputs per zone -->
+<div id="fileInputs"></div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+var token = localStorage.getItem('token');
+var user  = JSON.parse(localStorage.getItem('user') || '{}');
+if (!token) window.location.href = '/login';
+document.getElementById('userName').textContent  = user.name || 'Staff';
+document.getElementById('userRole').textContent  = user.role || 'staff';
+document.getElementById('userAvatar').textContent = (user.name||'A')[0].toUpperCase();
+
+var EMOJI = { mammal:'🦁', bird:'🦜', reptile:'🦎', fish:'🐟', amphibian:'🐸', invertebrate:'🦋' };
+var HEALTH_COLOR = { healthy:'#2d9e5a', recovering:'#e6a020', sick:'#c0392b', critical:'#ff0000' };
+var ZONE_FOR = { mammal:'safari', bird:'aviary', reptile:'reptile', fish:'aquatic', amphibian:'nocturnal', invertebrate:'forest' };
+
+var ZONES = [
+  { id:'safari',    label:'🌿 Safari Zone',    emoji:'🦁', color:'rgba(201,168,76,0.12)',  border:'rgba(201,168,76,0.4)',  bg:'linear-gradient(135deg,#3d6b2e,#4a7c36)',  desc:'Lions, Tigers, Elephants' },
+  { id:'aquatic',   label:'🌊 Aquatic Zone',   emoji:'🐟', color:'rgba(41,128,185,0.12)', border:'rgba(41,128,185,0.4)', bg:'linear-gradient(135deg,#1a5c7a,#1e7aa8)',  desc:'Fish, Sharks, Penguins'   },
+  { id:'aviary',    label:'🦜 Aviary Zone',    emoji:'🦜', color:'rgba(39,174,96,0.12)',  border:'rgba(39,174,96,0.4)',  bg:'linear-gradient(135deg,#2d6b1e,#3a8a28)',  desc:'Parrots, Eagles, Flamingos'},
+  { id:'reptile',   label:'🦎 Reptile Zone',   emoji:'🦎', color:'rgba(230,126,34,0.12)', border:'rgba(230,126,34,0.4)', bg:'linear-gradient(135deg,#7a5c2e,#9e7840)',  desc:'Snakes, Lizards, Turtles' },
+  { id:'nocturnal', label:'🌙 Nocturnal Zone', emoji:'🦇', color:'rgba(142,68,173,0.12)', border:'rgba(142,68,173,0.4)', bg:'linear-gradient(135deg,#3a2a52,#4e3870)',  desc:'Owls, Bats, Night animals' },
+  { id:'forest',    label:'🌲 Forest Zone',    emoji:'🐸', color:'rgba(45,110,62,0.12)',  border:'rgba(45,110,62,0.4)',  bg:'linear-gradient(135deg,#1e4a14,#285e1a)',  desc:'Frogs, Insects, Deer'     }
+];
+
+// Video storage: { zoneId: { url, name, isLocal } }
+var zoneVideos = JSON.parse(localStorage.getItem('zoneVideos') || '{}');
+var zoneAnimals = {}; // { zoneId: [animals] }
+var allAnimals  = [];
+
+// Load animals
+fetch('/api/animals?limit=100', { headers: { 'Authorization': 'Bearer ' + token } })
+  .then(function(r){ return r.json(); })
+  .then(function(d){
+    allAnimals = d.data || [];
+    // Group by zone
+    ZONES.forEach(function(z){ zoneAnimals[z.id] = []; });
+    allAnimals.forEach(function(a){
+      var zid = a.zone_assignment || ZONE_FOR[a.category] || 'safari';
+      if (!zoneAnimals[zid]) zoneAnimals[zid] = [];
+      zoneAnimals[zid].push(a);
+    });
+    renderZones();
+    renderAnimalsList();
+  });
+
+// ── Render zone cards ─────────────────────────────────────
+function renderZones() {
+  var grid = document.getElementById('zonesGrid');
+  var fi   = document.getElementById('fileInputs');
+  grid.innerHTML = '';
+  fi.innerHTML   = '';
+
+  ZONES.forEach(function(z){
+    var vid    = zoneVideos[z.id];
+    var animals = zoneAnimals[z.id] || [];
+    var hasVid  = !!(vid && vid.url);
+
+    // File input
+    var inp = document.createElement('input');
+    inp.type = 'file'; inp.accept = 'video/*';
+    inp.className = 'file-input';
+    inp.id = 'fi-' + z.id;
+    inp.onchange = function(e){ handleUpload(z.id, e); };
+    fi.appendChild(inp);
+
+    // Card HTML
+    var animalTags = animals.slice(0,4).map(function(a){
+      return '<a href="/animal/' + a.id + '" class="zone-animal-tag">' +
+        (EMOJI[a.category]||'🐾') + ' ' + a.name +
+      '</a>';
+    }).join('') + (animals.length > 4 ? '<span style="color:var(--muted);font-size:0.75rem">+' + (animals.length-4) + ' more</span>' : '');
+
+    var statusHtml = hasVid
+      ? '<span class="status-dot has-video" style="display:inline-block;width:6px;height:6px;border-radius:50%;background:#2d9e5a;margin-right:4px"></span><span style="color:#2d9e5a">Video loaded</span>'
+      : '<span class="status-dot no-video" style="display:inline-block;width:6px;height:6px;border-radius:50%;background:#8a9e8e;margin-right:4px"></span><span style="color:var(--muted)">No video — click to upload</span>';
+
+    var videoAreaHtml = hasVid
+      ? '<div class="zone-video-wrap">' +
+          '<video id="vid-' + z.id + '" src="' + vid.url + '" autoplay loop muted playsinline style="width:100%;height:100%;object-fit:cover;display:block;cursor:pointer;" onclick="openFocused(\'' + z.id + '\')" title="Click to fullscreen"></video>' +
+          '<div class="upload-overlay" onclick="triggerUpload(\'' + z.id + '\')">' +
+            '<div class="uo-btn">📁 Change Video</div>' +
+            '<span>' + (vid.name||'') + '</span>' +
+          '</div>' +
+          '<div class="upload-progress"><div class="upload-bar" id="upbar-' + z.id + '"></div></div>' +
+        '</div>'
+      : '<div class="zone-placeholder" style="background:' + z.bg + ';aspect-ratio:16/9;" onclick="triggerUpload(\'' + z.id + '\')">' +
+          '<div class="ph-emoji">' + z.emoji + '</div>' +
+          '<div class="ph-text">' + z.label + '<br><span style="color:var(--muted);font-size:0.75rem">' + z.desc + '</span></div>' +
+          '<div class="ph-upload-hint">📁 CLICK TO UPLOAD VIDEO</div>' +
+        '</div>';
+
+    var card = document.createElement('div');
+    card.className = 'zone-card';
+    card.id = 'zcard-' + z.id;
+    card.innerHTML =
+      videoAreaHtml +
+      '<div class="zone-info">' +
+        '<div class="zone-top">' +
+          '<div class="zone-name">' + z.label + '</div>' +
+          '<div class="zone-actions">' +
+            (hasVid ? '<button class="z-btn" onclick="openFocused(\'' + z.id + '\')" title="Fullscreen">⛶</button>' : '') +
+            (hasVid ? '<button class="z-btn" onclick="removeVideo(\'' + z.id + '\')" title="Remove video">🗑</button>' : '') +
+            '<button class="z-btn" onclick="triggerUpload(\'' + z.id + '\')" title="Upload video">📁</button>' +
+          '</div>' +
+        '</div>' +
+        '<div class="zone-animals">' + (animalTags || '<span style="color:var(--muted);font-size:0.75rem">No animals assigned</span>') + '</div>' +
+        '<div class="zone-status" style="font-size:0.75rem">' + statusHtml + '</div>' +
+      '</div>';
+
+    grid.appendChild(card);
+  });
+}
+
+// ── Upload handler ────────────────────────────────────────
+function triggerUpload(zoneId) {
+  document.getElementById('fi-' + zoneId).click();
+}
+
+function handleUpload(zoneId, e) {
+  var file = e.target.files[0];
+  if (!file) return;
+
+  // Show progress bar
+  var bar = document.getElementById('upbar-' + zoneId);
+
+  // Option 1: Upload to server
+  var useServer = true; // set false to use local blob URL only
+
+  if (useServer) {
+    var fd = new FormData();
+    fd.append('video', file);
+
+    // Simulate progress
+    var prog = 0;
+    var progInt = setInterval(function(){
+      prog += Math.random() * 15;
+      if (prog > 90) prog = 90;
+      if (bar) bar.style.width = prog + '%';
+    }, 200);
+
+    fetch('/api/animals/upload-zone-video', {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer ' + token },
+      body: fd
+    })
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+      clearInterval(progInt);
+      if (bar) bar.style.width = '100%';
+      var url = d.url || d.path || '';
+      if (url) {
+        saveZoneVideo(zoneId, url, file.name, false);
+      } else {
+        // Fallback to blob
+        useBlobUrl(zoneId, file);
+      }
+      setTimeout(function(){ if(bar) bar.style.width='0%'; }, 1000);
+    })
+    .catch(function(){
+      clearInterval(progInt);
+      // Fallback: use local blob URL (works within same browser session)
+      useBlobUrl(zoneId, file);
+      if (bar) bar.style.width = '0%';
+    });
+  } else {
+    useBlobUrl(zoneId, file);
+  }
+
+  // Reset input
+  e.target.value = '';
+}
+
+function useBlobUrl(zoneId, file) {
+  var url = URL.createObjectURL(file);
+  saveZoneVideo(zoneId, url, file.name, true);
+  showToast('✅ Video loaded for ' + getZoneLabel(zoneId) + '!');
+}
+
+function saveZoneVideo(zoneId, url, name, isLocal) {
+  // For blob URLs, don't persist (they don't survive page reload)
+  if (!isLocal) {
+    zoneVideos[zoneId] = { url: url, name: name, isLocal: false };
+    try { localStorage.setItem('zoneVideos', JSON.stringify(zoneVideos)); } catch(e){}
+  } else {
+    // Local blob — only in memory
+    zoneVideos[zoneId] = { url: url, name: name, isLocal: true };
+  }
+  renderZones();
+  showToast('🎬 Video set for ' + getZoneLabel(zoneId));
+}
+
+function removeVideo(zoneId) {
+  if (!confirm('Remove video from ' + getZoneLabel(zoneId) + '?')) return;
+  if (zoneVideos[zoneId] && zoneVideos[zoneId].isLocal) {
+    URL.revokeObjectURL(zoneVideos[zoneId].url);
+  }
+  delete zoneVideos[zoneId];
+  try {
+    var toSave = {};
+    Object.keys(zoneVideos).forEach(function(k){ if (!zoneVideos[k].isLocal) toSave[k] = zoneVideos[k]; });
+    localStorage.setItem('zoneVideos', JSON.stringify(toSave));
+  } catch(e){}
+  renderZones();
+  showToast('Video removed');
+}
+
+// ── Fullscreen focused view ───────────────────────────────
+function openFocused(zoneId) {
+  var vid    = zoneVideos[zoneId];
+  var zone   = ZONES.find(function(z){ return z.id === zoneId; });
+  var animals = zoneAnimals[zoneId] || [];
+  if (!vid || !vid.url) return;
+
+  document.getElementById('focusedVideo').src = vid.url;
+  document.getElementById('focusedTitle').textContent = zone ? zone.label : zoneId;
+  document.getElementById('focusedAnimals').innerHTML = animals.map(function(a){
+    return '<a href="/animal/' + a.id + '" style="display:flex;align-items:center;gap:6px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);border-radius:20px;padding:5px 12px;color:var(--cream);text-decoration:none;font-size:0.82rem;transition:all 0.2s;" onmouseover="this.style.background=\'rgba(201,168,76,0.2)\'" onmouseout="this.style.background=\'rgba(255,255,255,0.08)\'">' +
+      (EMOJI[a.category]||'🐾') + ' ' + a.name +
+    '</a>';
+  }).join('');
+  document.getElementById('focusedOverlay').classList.add('open');
+}
+
+function closeFocused() {
+  document.getElementById('focusedOverlay').classList.remove('open');
+  document.getElementById('focusedVideo').pause();
+  document.getElementById('focusedVideo').src = '';
+}
+
+// Close on backdrop click
+document.getElementById('focusedOverlay').addEventListener('click', function(e){
+  if (e.target === this) closeFocused();
+});
+
+// ESC key
+document.addEventListener('keydown', function(e){
+  if (e.key === 'Escape') closeFocused();
+});
+
+// ── Animals list ──────────────────────────────────────────
+function renderAnimalsList() {
+  var grid = document.getElementById('animalsGrid');
+  if (!allAnimals.length) {
+    grid.innerHTML = '<div style="color:var(--muted);font-size:0.85rem">No animals found</div>';
+    return;
+  }
+  grid.innerHTML = allAnimals.map(function(a){
+    var zid  = a.zone_assignment || ZONE_FOR[a.category] || 'safari';
+    var zone = ZONES.find(function(z){ return z.id === zid; });
+    return '<a href="/animal/' + a.id + '" class="animal-chip">' +
+      '<span class="chip-emoji">' + (EMOJI[a.category]||'🐾') + '</span>' +
+      '<div>' +
+        '<div class="chip-name">' + a.name + '</div>' +
+        '<div class="chip-zone">' + (zone ? zone.label : zid) + '</div>' +
+      '</div>' +
+      '<div class="chip-health" style="background:' + (HEALTH_COLOR[a.health_status]||'#2d9e5a') + '"></div>' +
+    '</a>';
+  }).join('');
+}
+
+// ── Helpers ───────────────────────────────────────────────
+function getZoneLabel(zoneId) {
+  var zone = ZONES.find(function(z){ return z.id === zoneId; });
+  return zone ? zone.label : zoneId;
+}
+
+function showToast(msg, type) {
+  var t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast ' + (type||'success') + ' show';
+  setTimeout(function(){ t.classList.remove('show'); }, 3000);
+}
+
+// Restore saved server videos on load
+Object.keys(zoneVideos).forEach(function(zid){
+  if (zoneVideos[zid].isLocal) delete zoneVideos[zid]; // Can't restore blob URLs
+});
+</script>
+</body>
+</html>

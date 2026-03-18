@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <link rel="stylesheet" href="/css/jungle.css">
+<link rel="stylesheet" href="/css/animations.css">
+<link rel="stylesheet" href="/css/theme.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Digital Zoo — QR Code Generator</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Crimson+Pro:wght@300;400;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+  :root{--bg:#0a1a0e;--sidebar:#0d2414;--card:#0f2818;--card2:#122e1c;--gold:#c9a84c;--gold-light:#e8c86e;--cream:#f5ead5;--white:#faf7f0;--green:#2d6e3e;--muted:#8a9e8e;--border:rgba(201,168,76,0.15);}
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{font-family:'Crimson Pro',serif;background:var(--bg);color:var(--white);display:flex;min-height:100vh;}
+  .sidebar{width:260px;background:var(--sidebar);border-right:1px solid var(--border);display:flex;flex-direction:column;position:fixed;top:0;left:0;height:100vh;z-index:100;}
+  .sidebar-logo{padding:24px 20px;border-bottom:1px solid var(--border);}
+  .sidebar-logo h2{font-family:'Playfair Display',serif;background:linear-gradient(135deg,#c9a84c,#e8c86e);-webkit-background-clip:text;-webkit-text-fill-color:transparent;font-size:1.3rem;}
+  .sidebar-logo p{color:var(--muted);font-size:0.75rem;letter-spacing:2px;text-transform:uppercase;margin-top:2px;}
+  .nav{flex:1;padding:16px 0;overflow-y:auto;}
+  .nav-section{padding:8px 20px;color:var(--muted);font-size:0.7rem;letter-spacing:3px;text-transform:uppercase;margin-top:8px;}
+  .nav a{display:flex;align-items:center;gap:12px;padding:12px 20px;color:var(--muted);text-decoration:none;transition:all 0.2s;font-size:0.95rem;border-left:3px solid transparent;}
+  .nav a:hover,.nav a.active{color:var(--white);background:rgba(201,168,76,0.08);border-left-color:var(--gold);}
+  .nav a.active{color:var(--gold-light);}
+  .nav a .icon{width:20px;text-align:center;font-size:1.1rem;}
+  .sidebar-user{padding:16px 20px;border-top:1px solid var(--border);}
+  .user-info{display:flex;align-items:center;gap:10px;}
+  .user-avatar{width:36px;height:36px;background:linear-gradient(135deg,var(--gold),var(--green));border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:bold;color:var(--bg);}
+  .user-name{font-size:0.9rem;color:var(--cream);}
+  .user-role{font-size:0.75rem;color:var(--muted);text-transform:uppercase;}
+  .main{margin-left:260px;flex:1;padding:28px;}
+  .topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:28px;}
+  .topbar h1{font-family:'Playfair Display',serif;font-size:1.8rem;color:var(--cream);}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:20px;}
+  .qr-card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:20px;display:flex;flex-direction:column;align-items:center;gap:14px;transition:all 0.3s;}
+  .qr-card:hover{transform:translateY(-3px);border-color:rgba(201,168,76,0.3);}
+  .qr-animal-info{text-align:center;}
+  .qr-animal-emoji{font-size:2.5rem;display:block;margin-bottom:4px;}
+  .qr-name{font-family:'Playfair Display',serif;color:var(--cream);font-size:1.1rem;}
+  .qr-species{color:var(--muted);font-size:0.8rem;font-style:italic;}
+  .qr-box{background:#fff;border-radius:12px;padding:12px;display:flex;align-items:center;justify-content:center;}
+  .qr-actions{display:flex;gap:8px;width:100%;}
+  .btn-sm{flex:1;padding:8px;border-radius:8px;font-size:0.82rem;cursor:pointer;font-family:'Crimson Pro',serif;transition:all 0.2s;border:none;text-align:center;}
+  .btn-download{background:rgba(201,168,76,0.15);color:var(--gold-light);border:1px solid rgba(201,168,76,0.3);}
+  .btn-download:hover{background:rgba(201,168,76,0.3);}
+  .btn-print{background:rgba(41,128,185,0.15);color:#74b9e7;border:1px solid rgba(41,128,185,0.3);}
+  .btn-print:hover{background:rgba(41,128,185,0.3);}
+  .badge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:0.7rem;text-transform:uppercase;letter-spacing:1px;}
+  .badge.healthy{background:rgba(45,110,62,0.3);color:#7eff90;border:1px solid rgba(45,110,62,0.4);}
+  .badge.sick{background:rgba(192,57,43,0.3);color:#ff7070;border:1px solid rgba(192,57,43,0.4);}
+  .badge.recovering{background:rgba(230,126,34,0.3);color:#ffb347;border:1px solid rgba(230,126,34,0.4);}
+  .search-bar{width:100%;max-width:400px;background:rgba(13,36,20,0.8);border:1px solid var(--border);border-radius:10px;padding:10px 16px;color:var(--white);font-family:'Crimson Pro',serif;font-size:0.95rem;outline:none;margin-bottom:24px;}
+  .search-bar:focus{border-color:var(--gold);}
+  .toast{position:fixed;bottom:30px;right:30px;background:rgba(45,110,62,0.9);border:1px solid rgba(45,110,62,0.6);color:#fff;padding:14px 22px;border-radius:12px;z-index:9999;transition:all 0.3s;transform:translateY(100px);opacity:0;}
+  .toast.show{transform:translateY(0);opacity:1;}
+</style>
+</head>
+<body>
+<aside class="sidebar">
+  <div class="sidebar-logo"><h2>🦁 DIGITAL ZOO</h2><p>Admin System</p></div>
+  <nav class="nav">
+    <div class="nav-section">Main</div>
+    <a href="/dashboard"><span class="icon">📊</span> Dashboard</a>
+    <a href="/animals"><span class="icon">🐾</span> Animals</a>
+    <a href="/adoptions"><span class="icon">🤝</span> Adoptions</a>
+    <a href="/medications"><span class="icon">💊</span> Medical Records</a>
+    <div class="nav-section">Unique Features</div>
+    <a href="/ai-health"><span class="icon">🤖</span> AI Health Predictor</a>
+    <a href="/zoo-map"><span class="icon">🗺️</span> Zoo Map</a>
+    <a href="/leaderboard"><span class="icon">🏆</span> Leaderboard</a>
+    <a href="/simulation"><span class="icon">🎮</span> Zoo Simulation</a>
+    <a href="/qr-codes" class="active"><span class="icon">📱</span> QR Codes</a>
+    <a href="/world-map"><span class="icon">🌍</span> Origin Map</a>
+    <a href="/birthdays"><span class="icon">🎂</span> Birthdays</a>
+    <a href="/activity-monitor"><span class="icon">⚡</span> Activity Monitor</a>
+    <div class="nav-section">Management</div>
+    <a href="/reports"><span class="icon">📈</span> Reports</a>
+  </nav>
+  <div class="sidebar-user">
+    <div class="user-info">
+      <div class="user-avatar" id="userAvatar">A</div>
+      <div><div class="user-name" id="userName">Loading...</div><div class="user-role" id="userRole">---</div></div>
+    </div>
+  </div>
+</aside>
+
+<main class="main">
+  <div class="topbar">
+    <div>
+      <h1>📱 QR Code Generator</h1>
+      <p style="color:var(--muted);font-size:0.9rem;margin-top:4px">Scan to instantly view any animal's profile</p>
+    </div>
+  </div>
+  <input type="text" class="search-bar" id="searchInput" placeholder="🔍 Search animals..." oninput="filterCards()">
+  <div class="grid" id="qrGrid"><div style="color:var(--muted);text-align:center;padding:40px;grid-column:1/-1">Loading animals...</div></div>
+</main>
+
+<div class="toast" id="toast"></div>
+
+<script>
+var token = localStorage.getItem('token');
+var user  = JSON.parse(localStorage.getItem('user') || '{}');
+if (!token) window.location.href = '/login';
+document.getElementById('userName').textContent  = user.name || 'Staff';
+document.getElementById('userRole').textContent  = user.role || 'staff';
+document.getElementById('userAvatar').textContent = (user.name || 'A')[0].toUpperCase();
+
+var EMOJI = { mammal:'🦁', bird:'🦜', reptile:'🦎', fish:'🐟', amphibian:'🐸', invertebrate:'🦋' };
+var allAnimals = [];
+
+fetch('/api/animals?limit=100', { headers: { 'Authorization': 'Bearer ' + token } })
+  .then(function(r){ return r.json(); })
+  .then(function(d){
+    allAnimals = d.data || [];
+    renderCards(allAnimals);
+  });
+
+function renderCards(animals) {
+  var grid = document.getElementById('qrGrid');
+  grid.innerHTML = '';
+  if (!animals.length) {
+    grid.innerHTML = '<div style="color:var(--muted);text-align:center;padding:40px;grid-column:1/-1">No animals found</div>';
+    return;
+  }
+  animals.forEach(function(a){
+    var card = document.createElement('div');
+    card.className = 'qr-card';
+    card.id = 'card-' + a.id;
+
+    var url = window.location.origin + '/animal/' + a.id;
+
+    card.innerHTML =
+      '<div class="qr-animal-info">' +
+        '<span class="qr-animal-emoji">' + (EMOJI[a.category]||'🐾') + '</span>' +
+        '<div class="qr-name">' + a.name + '</div>' +
+        '<div class="qr-species">' + a.species + '</div>' +
+        '<span class="badge ' + a.health_status + '" style="margin-top:6px">' + a.health_status + '</span>' +
+      '</div>' +
+      '<div class="qr-box" id="qr-' + a.id + '"></div>' +
+      '<div style="color:var(--muted);font-size:0.72rem;text-align:center;word-break:break-all">' + url + '</div>' +
+      '<div class="qr-actions">' +
+        '<button class="btn-sm btn-download" onclick="downloadQR(' + a.id + ',\'' + a.name + '\')">⬇ Download</button>' +
+        '<button class="btn-sm btn-print" onclick="printQR(' + a.id + ',\'' + a.name + '\')">🖨 Print</button>' +
+      '</div>';
+
+    grid.appendChild(card);
+
+    // Generate QR
+    setTimeout(function(){
+      try {
+        new QRCode(document.getElementById('qr-' + a.id), {
+          text: url,
+          width: 160, height: 160,
+          colorDark: '#0a1a0e',
+          colorLight: '#ffffff',
+          correctLevel: QRCode.CorrectLevel.H
+        });
+      } catch(e) { console.warn('QR error:', e); }
+    }, 100);
+  });
+}
+
+function filterCards() {
+  var q = document.getElementById('searchInput').value.toLowerCase();
+  var filtered = allAnimals.filter(function(a){
+    return !q || a.name.toLowerCase().includes(q) || a.species.toLowerCase().includes(q);
+  });
+  renderCards(filtered);
+}
+
+function downloadQR(id, name) {
+  var canvas = document.querySelector('#qr-' + id + ' canvas');
+  if (!canvas) { showToast('QR not ready yet'); return; }
+  var link = document.createElement('a');
+  link.download = name.replace(/\s+/g,'_') + '_QR.png';
+  link.href = canvas.toDataURL('image/png');
+  link.click();
+  showToast('QR Code downloaded for ' + name + '!');
+}
+
+function printQR(id, name) {
+  var canvas = document.querySelector('#qr-' + id + ' canvas');
+  if (!canvas) { showToast('QR not ready yet'); return; }
+  var win = window.open('', '_blank');
+  win.document.write('<html><body style="text-align:center;font-family:serif;padding:40px">' +
+    '<h2>' + name + '</h2>' +
+    '<img src="' + canvas.toDataURL() + '" width="250"><br>' +
+    '<p style="color:#666;font-size:12px">Scan to view animal profile</p>' +
+    '<p style="color:#999;font-size:10px">' + window.location.origin + '/animal/' + id + '</p>' +
+    '</body></html>');
+  win.document.close();
+  win.print();
+}
+
+function showToast(msg) {
+  var t = document.getElementById('toast');
+  t.textContent = msg; t.className = 'toast show';
+  setTimeout(function(){ t.classList.remove('show'); }, 2500);
+}
+</script>
+</body>
+</html>
