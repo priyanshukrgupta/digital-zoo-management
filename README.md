@@ -123,7 +123,7 @@ Database (MySQL)
 ### 1️⃣ Clone Repository
 
 ```bash
-git clone https://github.com/your-username/digital-zoo-management.git
+git clone https://github.com/priyanshukrgupta/digital-zoo-management.git
 cd digital-zoo-management
 ```
 
