@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🦁 Animals Dashboard - Digital Zoo Admin</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="icon" type="image/png" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🦁</text></svg>">
+</head>
+<body>
+    <!-- VFX CANVAS -->
+    <canvas class="vfx-canvas" id="vfxCanvas"></canvas>
+    
+    <!-- HEADER WITH LIVE VIDEO -->
+    <header class="jungle-header">
+        <div class="header-content">
+            <div class="logo">
+                <h1>🦁 Digital Zoo Admin</h1>
+                <span>Animals Dashboard</span>
+            </div>
+            <div class="live-indicator">
+                <span class="live-dot"></span>
+                LIVE - 08:47 PM IST
+            </div>
+        </div>
+        
+        <!-- LIVE VIDEO FEED -->
+        <div class="live-video-container">
+            <video id="liveFeed" autoplay muted loop playsinline>
+                <source src="data:video/mp4;base64,//data here" type="video/mp4">
+                <img src="data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjI1MCIgdmlld0JveD0iMCAwIDQwMCAyNTAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSI0MDAiIGhlaWdodD0iMjUwIiBmaWxsPSIjMjQ4QjU2Ii8+CjxjaXJjbGUgY3g9IjIwMCIgY3k9IjEyNSIgcj0iNjAiIGZpbGw9IiMyOUE3NDUiLz4KPHRleHQgeD0iMjAwIiB5PSIxMzAiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIyNCIgZmlsbD0id2hpdGUiIHRleHQtYW5jaG9yPSJtaWRkbGUiPkxJVkUgRkVFRCBPTkxJTkU8L3RleHQ+Cjwvc3ZnPgo=" alt="Live Lion Feed">
+            </video>
+            <div class="video-overlay">
+                <div class="live-badge">🔴 LIVE Lion Pride Rock</div>
+                <div class="video-stats">
+                    <span>🦁 Simba & Rani</span>
+                    <span>📹 1080p 30fps</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- MAIN CONTENT -->
+    <main class="jungle-main">
+        <div class="container">
+            <!-- STATS DASHBOARD -->
+            <section class="stats-grid">
+                <div class="stat-card excellent">
+                    <div class="stat-icon">🦁</div>
+                    <div class="stat-value" data-target="25">0</div>
+                    <div class="stat-label">Total Animals</div>
+                </div>
+                <div class="stat-card good">
+                    <div class="stat-icon">🏞️</div>
+                    <div class="stat-value" data-target="18">0</div>
+                    <div class="stat-label">Excellent Health</div>
+                </div>
+                <div class="stat-card fair">
+                    <div class="stat-icon">📊</div>
+                    <div class="stat-value" data-target="82">0</div>
+                    <div class="stat-label">Avg Occupancy</div>
+                </div>
+                <div class="stat-card good">
+                    <div class="stat-icon">💉</div>
+                    <div class="stat-value" data-target="12">0</div>
+                    <div class="stat-label">Today's Treatments</div>
+                </div>
+            </section>
+
+            <!-- CONTROLS -->
+            <section class="controls-section">
+                <div class="control-tabs">
+                    <button class="tab-btn active" data-tab="grid">🦁 Grid View</button>
+                    <button class="tab-btn" data-tab="list">📋 List View</button>
+                    <button class="tab-btn" data-tab="map">🗺️ Cage Map</button>
+                </div>
+                <div class="control-filters">
+                    <select class="filter-select">
+                        <option>All Habitats</option>
+                        <option>Savanna 🦁</option>
+                        <option>Jungle 🐅</option>
+                        <option>Aquatic 🐊</option>
+                        <option>Aviary 🦜</option>
+                    </select>
+                    <input type="text" class="search-input" placeholder="🔍 Search Simba, Tigra...">
+                    <button class="refresh-btn">🔄 Refresh Live Data</button>
+                </div>
+            </section>
+
+            <!-- ANIMALS GRID -->
+            <section class="animals-grid" id="gridView">
+                <div class="animal-card" data-animal="simba">
+                    <div class="animal-media">
+                        <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDMwMCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIzMDAiIGhlaWdodD0iMjAwIiByeD0iMjUiIGZpbGw9IiM0QTlDNyQiLz4KPHRleHQgeD0iMTUwIiB5PSIxMDAiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSI4MCIgZmlsbD0iI0ZGRiIgZmlsbC1vcGFjaXR5PSIwLjgiIHRleHQtYW5jaG9yPSJtaWRkbGUiIHRleHQtYmFzZWxpbmU9Im1pZGRsZSI+🦁PC90ZXh0Pgo8L3N2Zz4K" alt="Simba">
+                        <div class="status-overlay excellent">EXCELLENT</div>
+                    </div>
+                    <div class="animal-info">
+                        <h3>🦁 Simba <span class="nickname">(King)</span></h3>
+                        <div class="animal-stats">
+                            <span class="stat">Lion • 190kg • Cage A1</span>
+                            <span class="stat">Asiatic • M • 5 years</span>
+                            <span class="stat">Primary: Rahul Desai</span>
+                        </div>
+                        <div class="quick-actions">
+                            <button class="action-btn primary">📋 Health Log</button>
+                            <button class="action-btn secondary">🎥 Live Feed</button>
+                            <button class="action-btn danger">⚠️ Alert</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="animal-card" data-animal="tigra">
+                    <div class="animal-media">
+                        <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDMwMCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIzMDAiIGhlaWdodD0iMjAwIiByeD0iMjUiIGZpbGw9IiNGRjVCMCIvPgo8dGV4dCB4PSIxNTAiIHk9IjEwMCIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjgwIiBmaWxsPSIjRkZGIiBmaWxsLW9wYWNpdHk9IjAuOSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgdGV4dC1iYXNlbGluZT0ibWlkZGxlIj5🐅PC90ZXh0Pgo8L3N2Zz4K" alt="Tigra">
+                        <div class="status-overlay good">GOOD</div>
+                    </div>
+                    <div class="animal-info">
+                        <h3>🐅 Tigra <span class="nickname">(Stripes)</span></h3>
+                        <div class="animal-stats">
+                            <span class="stat">Bengal Tiger • 140kg • Cage B1</span>
+                            <span class="stat">Female • 4 years • Jungle</span>
+                            <span class="stat">Vet: Dr. Sanjay Patel</span>
+                        </div>
+                        <div class="quick-actions">
+                            <button class="action-btn primary">💉 Medication</button>
+                            <button class="action-btn secondary">📞 Call Keeper</button>
+                            <button class="action-btn success">✅ Check-in</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- MORE ANIMAL CARDS (10+) -->
+                <div class="animal-card" data-animal="jumbo">
+                    <div class="animal-media">
+                        <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDMwMCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIzMDAiIGhlaWdodD0iMjAwIiByeD0iMjUiIGZpbGw9IiM4RDQ1MzQiLz4KPHRleHQgeD0iMTUwIiB5PSIxMDAiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSI4MCIgZmlsbD0id2hpdGUiIHRleHQtYW5jaG9yPSJtaWRkbGUiIHRleHQtYmFzZWxpbmU9Im1pZGRsZSI+🐘PC90ZXh0Pgo8L3N2Zz4K" alt="Jumbo">
+                        <div class="status-overlay excellent">EXCELLENT</div>
+                    </div>
+                    <div class="animal-info">
+                        <h3>🐘 Jumbo <span class="nickname">(Big Boy)</span></h3>
+                        <div class="animal-stats">
+                            <span class="stat">African Elephant • 6500kg • Cage E1</span>
+                            <span class="stat">Male • 12 years • Savanna</span>
+                        </div>
+                        <div class="quick-actions">
+                            <button class="action-btn primary">🍽️ Feeding Log</button>
+                            <button class="action-btn secondary">📈 Analytics</button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- LIST VIEW (Hidden by default) -->
+            <section class="animals-list" id="listView" style="display: none;">
+                <div class="table-container">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>🦁 Animal</th>
+                                <th>Health</th>
+                                <th>Cage</th>
+                                <th>Keeper</th>
+                                <th>Weight</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>🦁 Simba</strong><br><small>Lion - Asiatic</small></td>
+                                <td><span class="status-badge excellent">EXCELLENT</span></td>
+                                <td>A1 - Savanna</td>
+                                <td>Rahul Desai</td>
+                                <td>190.5 kg</td>
+                                <td>Active</td>
+                                <td>
+                                    <button class="action-btn primary small">View</button>
+                                    <button class="action-btn secondary small">Feed</button>
+                                </td>
+                            </tr>
+                            <!-- MORE ROWS -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <!-- AUDIO AMBIENCE -->
+    <audio id="jungleAmbience" loop>
+        <source src="data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBJBfkpPwt/+QBVFApGn+DyvmwhBJBfkpPwt/+QBVFApGn+DyvmwhBJBfkpPwt/+Q==" type="audio/wav">
+    </audio>
+
+    <!-- NOTIFICATION SYSTEM -->
+    <div id="notificationContainer"></div>
+
+    <script src="js/main.js"></script>
+    <script>
+        // VFX ENHANCEMENTS FOR ANIMALS PAGE
+        document.addEventListener('DOMContentLoaded', function() {
+            // START JUNGLE AMBIENCE
+            const ambience = document.getElementById('jungleAmbience');
+            ambience.volume = 0.3;
+            ambience.play().catch(e => console.log('Audio autoplay blocked'));
+
+            // LIVE VIDEO FEED SIMULATION
+            const liveFeed = document.getElementById('liveFeed');
+            if (liveFeed) {
+                liveFeed.currentTime = Math.random() * 10;
+            }
+
+            // ANIMATED COUNTER
+            function animateCounters() {
+                document.querySelectorAll('.stat-value').forEach(counter => {
+                    const target = parseInt(counter.getAttribute('data-target'));
+                    let start = 0;
+                    const increment = target / 100;
+                    const timer = setInterval(() => {
+                        start += increment;
+                        if (start >= target) {
+                            counter.textContent = target;
+                            clearInterval(timer);
+                        } else {
+                            counter.textContent = Math.floor(start);
+                        }
+                    }, 20);
+                });
+            }
+
+            // TAB SWITCHING
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+                    
+                    document.querySelectorAll('[id$="View"]').forEach(view => view.style.display = 'none');
+                    document.getElementById(this.getAttribute('data-tab') + 'View').style.display = 'block';
+                });
+            });
+
+            // CARD HOVER ANIMATIONS
+            document.querySelectorAll('.animal-card').forEach(card => {
+                card.addEventListener('mouseenter', function() {
+                    this.style.transform = 'translateY(-15px) scale(1.02)';
+                    this.style.boxShadow = '0 30px 60px rgba(0,0,0,0.4)';
+                });
+                card.addEventListener('mouseleave', function() {
+                    this.style.transform = 'translateY(0) scale(1)';
+                    this.style.boxShadow = 'var(--jungle-shadow)';
+                });
+            });
+
+            // LIVE DATA REFRESH
+            document.querySelector('.refresh-btn')?.addEventListener('click', function() {
+                this.innerHTML = '⏳ Updating...';
+                setTimeout(() => {
+                    this.innerHTML = '✅ Updated!';
+                    setTimeout(() => this.innerHTML = '🔄 Refresh Live Data', 2000);
+                    animateCounters();
+                }, 1500);
+            });
+
+            // INIT COUNTERS
+            setTimeout(animateCounters, 500);
+
+            // NOTIFICATION SYSTEM
+            function showNotification(message, type = 'success') {
+                const container = document.getElementById('notificationContainer');
+                const notif = document.createElement('div');
+                notif.className = `notification ${type}`;
+                notif.innerHTML = message;
+                container.appendChild(notif);
+                setTimeout(() => notif.remove(), 4000);
+            }
+
+            // SIMULATE LIVE UPDATES
+            setInterval(() => {
+                const statuses = ['excellent', 'good', 'fair'];
+                document.querySelectorAll('.status-overlay').forEach(status => {
+                    if (Math.random() < 0.1) {
+                        status.textContent = statuses[Math.floor(Math.random() * statuses.length)].toUpperCase();
+                        status.className = `status-overlay ${statuses[Math.floor(Math.random() * statuses.length)]}`;
+                    }
+                });
+            }, 5000);
+
+            // MOBILE RESPONSIVE
+            function handleResize() {
+                const isMobile = window.innerWidth < 768;
+                document.querySelector('.stats-grid').style.gridTemplateColumns = 
+                    isMobile ? 'repeat(2, 1fr)' : 'repeat(4, 1fr)';
+            }
+            window.addEventListener('resize', handleResize);
+            handleResize();
+        });
+    </script>
+    
+    <style>
+        /* EMBEDDED STYLES FOR ANIMALS DASHBOARD (500+ lines) */
+        .jungle-header {
+            background: linear-gradient(135deg, rgba(26,60,52,0.95) 0%, rgba(45,90,74,0.9) 100%);
+            padding: 20px 0;
+            position: relative;
+            overflow: hidden;
+        }
+        .header-content { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            max-width: 1400px; 
+            margin: 0 auto; 
+            padding: 0 20px; 
+            color: white; 
+        }
+        .live-indicator { 
+            background: rgba(220,53,69,0.2); 
+            padding: 8px 16px; 
+            border-radius: 25px; 
+            font-size: 0.9rem; 
+            font-weight: 600; 
+        }
+        .live-dot { 
+            display: inline-block; 
+            width: 10px; 
+            height: 10px; 
+            background: #dc3545; 
+            border-radius: 50%; 
+            margin-right: 8px; 
+            animation: pulse 2s infinite; 
+        }
+        @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.5} }
+        
+        .live-video-container { 
+            position: relative; 
+            max-width: 1200px; 
+            margin: 20px auto; 
+            border-radius: 25px; 
+            overflow: hidden; 
+            box-shadow: 0 30px 80px rgba(0,0,0,0.5); 
+        }
+        #liveFeed { 
+            width: 100%; 
+            height: 300px; 
+            object-fit: cover; 
+        }
+        .video-overlay { 
+            position: absolute; 
+            top: 20px; 
+            left: 20px; 
+            background: rgba(0,0,0,0.7); 
+            padding: 15px 20px; 
+            border-radius: 20px; 
+            color: white; 
+        }
+        .live-badge { 
+            font-size: 1.1rem; 
+            font-weight: 700; 
+            margin-bottom: 5px; 
+        }
+        
+        .stats-grid { 
+            display: grid; 
+            grid-template-columns: repeat(4, 1fr); 
+            gap: 25px; 
+            margin: 40px 0; 
+        }
+        .stat-card { 
+            background: rgba(255,255,255,0.95); 
+            padding: 30px; 
+            border-radius: 25px; 
+            text-align: center; 
+            box-shadow: var(--jungle-shadow); 
+            transition: all 0.4s ease; 
+        }
+        .stat-card:hover { 
+            transform: translateY(-10px); 
+        }
+        .stat-icon { font-size: 3rem; margin-bottom: 15px; display: block; }
+        .stat-value { 
+            font-size: 2.5rem; 
+            font-weight: 800; 
+            color: var(--jungle-green-dark); 
+            margin-bottom: 10px; 
+        }
+        .stat-card.excellent .stat-value { color: #28a745; }
+        .stat-card.good .stat-value { color: #6acc8e; }
+        
+        .controls-section { 
+            display: flex; 
+            gap: 20px; 
+            margin: 40px 0; 
+            flex-wrap: wrap; 
+            align-items: center; 
+        }
+        .tab-btn { 
+            padding: 15px 25px; 
+            border: none; 
+            background: rgba(255,255,255,0.9); 
+            border-radius: 25px; 
+            cursor: pointer; 
+            font-weight: 600; 
+            transition: all 0.3s ease; 
+        }
+        .tab-btn.active, .tab-btn:hover { 
+            background: var(--jungle-green-bright); 
+            color: white; 
+            transform: translateY(-2px); 
+        }
+        
+        .animals-grid { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); 
+            gap: 30px; 
+        }
+        .animal-card { 
+            background: rgba(255,255,255,0.95); 
+            border-radius: 25px; 
+            overflow: hidden; 
+            box-shadow: var(--jungle-shadow); 
+            transition: all 0.4s cubic-bezier(0.25,0.46,0.45,0.94); 
+            backdrop-filter: blur(20px); 
+        }
+        .animal-media { 
+            position: relative; 
+            height: 220px; 
+            overflow: hidden; 
+        }
+        .animal-media img { 
+            width: 100%; 
+            height: 100%; 
+            object-fit: cover; 
+            transition: transform 0.5s ease; 
+        }
+        .animal-card:hover .animal-media img { transform: scale(1.1); }
+        .status-overlay { 
+            position: absolute; 
+            top: 15px; 
+            right: 15px; 
+            padding: 8px 16px; 
+            border-radius: 20px; 
+            font-weight: 700; 
+            font-size: 0.8rem; 
+        }
+        .status-overlay.excellent { 
+            background: rgba(40,167,69,0.9); 
+            color: white; 
+        }
+        
+        .quick-actions { 
+            display: flex; 
+            gap: 10px; 
+            margin-top: 20px; 
+        }
+        .action-btn { 
+            flex: 1; 
+            padding: 12px; 
+            border: none; 
+            border-radius: 15px; 
+            font-weight: 600; 
+            cursor: pointer; 
+            transition: all 0.3s ease; 
+            font-size: 0.85rem; 
+        }
+        .action-btn.primary { background: var(--jungle-green-bright); color: white; }
+        .action-btn.primary:hover { transform: scale(1.05); }
+        
+        @media (max-width: 768px) {
+            .stats-grid { grid-template-columns: repeat(2, 1fr); }
+            .controls-section { flex-direction: column; align-items: stretch; }
+            .animals-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</body>
+</html>
